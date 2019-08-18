@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   
-  <title>Archives: 2019 | tkcharlotte&#39;s blog</title>
+  <title>一个shell引发的思考 | tkcharlotte&#39;s blog</title>
   
   
 
@@ -44,7 +44,7 @@
   
   
   <div class="cover-wrapper">
-    <cover class='cover  half'>
+    <cover class='cover post half'>
       
         
   <h1 class='title'>tkcharlotte</h1>
@@ -239,22 +239,11 @@
   <div class="l_body">
     <div class='body-wrapper'>
       <div class='l_main'>
-	
-		
-  <section class="post-list">
-    
-      
-        
-          
-        
-      
-    
-    
-      
-        
-          <div class='post-wrapper'>
-            <article class="post reveal ">
   
+
+  
+    <article id="post" class="post white-box article-type-post" itemscope itemprop="blogPost">
+      
 
 
   <section class='meta'>
@@ -263,11 +252,13 @@
     <div class="meta" id="header-meta">
       
         
-  <h2 class="title">
-    <a href="/2019/08/18/shell-analy/">
-      一个shell引发的思考
-    </a>
-  </h2>
+  
+    <h1 class="title">
+      <a href="/2019/08/18/shell-analy/">
+        一个shell引发的思考
+      </a>
+    </h1>
+  
 
 
       
@@ -306,6 +297,8 @@
         
           
             
+  
+
 
           
         
@@ -322,45 +315,201 @@
   </section>
 
 
-  <section class="article typo">
-    <div class="article-entry" itemprop="articleBody">
-      <h4 id="起因"><a href="#起因" class="headerlink" title="起因"></a>起因</h4><p>最近在做内部靶场平台题目，其中一道题为爆破一句话木马，拿到key的值。</p>
-      
-        <div class="readmore">
-          <a href="/2019/08/18/shell-analy/" class="flat-box">
-            <i class="fas fa-book-open fa-fw" aria-hidden="true"></i>
-            Read More
-          </a>
+	  
+	  
+      <section class="article typo">
+        <div class="article-entry" itemprop="articleBody">
+          <h4 id="起因"><a href="#起因" class="headerlink" title="起因"></a>起因</h4><p>最近在做内部靶场平台题目，其中一道题为爆破一句话木马，拿到key的值。</p>
+<a id="more"></a>
+
+<h4 id="经过"><a href="#经过" class="headerlink" title="经过"></a>经过</h4><p>木马密码可以通过burp爆破得到</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190818120456.png" alt></p>
+<p>祭出菜刀，连上一句话，发现权限被限制的很死，基本关于文件操作以及命令执行的函数都被禁用了..</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190818120834.png" alt></p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190818120911.png" alt></p>
+<p>但是没有禁用<code>file_get_contents</code>函数，所以可以直接读取文件获得key。</p>
+<p>如果在实际中遇到这种环境，函数被禁，怎么绕过<code>disable_function</code>？</p>
+<p>绕过姿势，一般有这么几种：</p>
+<ul>
+<li><p>寻找未被禁用的函数</p>
+</li>
+<li><p>系统组件绕过</p>
+</li>
+<li><p>通过<code>LD_PRELOAD</code>绕过</p>
+</li>
+<li><p><code>mod-cgi</code> 绕过</p>
+</li>
+<li><p>执行自定义语句(自己实现函数功能，通过<code>webshell</code>执行)</p>
+</li>
+</ul>
+<h5 id="第一种-敏感函数"><a href="#第一种-敏感函数" class="headerlink" title="第一种  敏感函数"></a>第一种  敏感函数</h5><p>整理一下经常用的各类函数，方便查找。</p>
+<p><code>php</code>中读取文件可以使用以下函数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">readfile</span><br><span class="line">fread</span><br><span class="line">file_get_contents</span><br><span class="line">var_dump(file(file_name)) // file函数返回值位数组</span><br><span class="line">show_source</span><br><span class="line">hightlight_file</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+
+<p>在<code>php</code>中可以执行命令函数有：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">system,exec,shell_exec,passthru，pcntl_exec,shell_exec,mail,imap_open,imap_mail,putenv,ini_set,apache_setenv,symlink,link</span><br></pre></td></tr></table></figure>
+
+<p>列目录函数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">opendir</span><br><span class="line">scandir</span><br><span class="line">glob(&apos;*&apos;) </span><br><span class="line">$path = dirname(__FILE__);</span><br><span class="line">$result = glob($path.&apos;/*.php&apos;);</span><br><span class="line">print_r($result);</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<h5 id="第二种-三方组件"><a href="#第二种-三方组件" class="headerlink" title="第二种 三方组件"></a>第二种 三方组件</h5><p>利用系统存在的组件漏洞执行命令，扩大战果。</p>
+<ul>
+<li>Bash漏洞导致命令执行</li>
+<li><code>ImageMagic</code>绕过</li>
+<li><code>imagecreatefromgd2</code></li>
+<li><code>sendmail</code> </li>
+</ul>
+<h5 id="第三种-LD-PRELOAD"><a href="#第三种-LD-PRELOAD" class="headerlink" title="第三种 LD_PRELOAD"></a>第三种 LD_PRELOAD</h5><p>使用<code>LD_PRELOAD</code></p>
+<p>程序执行时要在动态链接库<code>.so</code>中寻找函数位置，这种绕过方式就是让程序去执行自定义的动态链接库，类似于<code>mysql</code>下的<code>udf</code>提权或者<code>redis</code>主从复制<code>RCE</code>方式。</p>
+<p><code>LD_PRELOAD</code>这个全局变量指定动态链接库文件，会在程序运行之前加载。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">export LD_PRELOAD = XXX/xx.so</span><br></pre></td></tr></table></figure>
+
+<p>如果可以上传文件，我们可以通过上传一个恶意的.so库文件，然后加载该文件。最后绕过<code>php</code>层面执行命令函数。</p>
+<p>推荐一个复现环境：</p>
+<p><a href="https://github.com/obolu/Bypass_Disable_functions" target="_blank" rel="noopener">https://github.com/obolu/Bypass_Disable_functions</a></p>
+<h5 id="第四种-mod-cgi-htaccess"><a href="#第四种-mod-cgi-htaccess" class="headerlink" title="第四种  mod_cgi+.htaccess"></a>第四种  mod_cgi+.htaccess</h5><p>在启用<code>mod_cgi</code>的apache服务器中，必须允许<code>.htaccess</code>以及有可写权限，要求有点苛刻。</p>
+<p>在apache配置中有<code>Options</code>以及<code>Addhandler</code>指令，前者用来控制目录选项，比方说是否允许目录遍历，是否允许访问等，后者用来指定特定后缀名的文件所对应的处理方式，在解析漏洞中就有这样的用法，上传带少见后缀的恶意文件，修改<code>.htaccess</code>文件达到执行代码的目的。</p>
+<p>这种绕过方式就是通过将要执行的程序写入带有特定拓展名的文件内，修改<code>.htaccess</code>文件，将恶意文件交给<code>cgi</code>处理。</p>
+<p>具体的原理可以查阅 <a href="https://www.cnblogs.com/hookjoy/p/8988862.html" target="_blank" rel="noopener">https://www.cnblogs.com/hookjoy/p/8988862.html</a></p>
+<h5 id="第五种-自定义语句"><a href="#第五种-自定义语句" class="headerlink" title="第五种 自定义语句"></a>第五种 自定义语句</h5><p>通过编写<code>php</code>代码，用<code>php</code>最基础的底层函数实现一些被禁用的函数。</p>
+<p>在本题目中，常见的列目录函数被禁用，包括<code>readdir</code>，<code>opendir</code>等函数，可以使用自定义语句列目录，也可以使用<code>scandir</code>函数。</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190818152208.png" alt></p>
+<p>想到可以读其他路径文件，说不定可以读到一些服务器的敏感信息啥的，看一下<code>phpinfo</code>中的<code>open_basedir</code>配置，限定了访问目录，只能访该题目所在目录。</p>
+<p>查阅资料后发现，可以通过<code>glob</code>伪协议绕过限制，读取栏目。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$path = dirname(__FILE__);</span><br><span class="line">$result = glob($path.&apos;/*.php&apos;);</span><br><span class="line">print_r($result);</span><br><span class="line"></span><br><span class="line">//简化版</span><br><span class="line">$a = &quot;glob:///*&quot;;print_r(scandir($a));</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190818152937.png" alt></p>
+<p>可以看到读到了根目录，但是没有足够权限读取/root/下的文件。需要借助其他的方式提升权限。</p>
+<p>最后发现该靶机是一台虚拟主机之类的单独空间，没有其他题目的key，== ！ 江还是老的辣啊2333</p>
+<p>最后附上<code>l3m0n</code>大佬的github链接，里边记录了各种绕过姿势</p>
+<p><a href="https://github.com/l3m0n/Bypass_Disable_functions_Shell" target="_blank" rel="noopener">https://github.com/l3m0n/Bypass_Disable_functions_Shell</a></p>
+<h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><p><a href="https://www.anquanke.com/post/id/175403" target="_blank" rel="noopener">https://www.anquanke.com/post/id/175403</a></p>
+<p><a href="https://www.tr0y.wang/2018/04/18/PHPDisalbedfunc/index.html" target="_blank" rel="noopener">https://www.tr0y.wang/2018/04/18/PHPDisalbedfunc/index.html</a></p>
+
         </div>
+        
+          
+
+
+  <section class='meta' id="footer-meta">
+    <hr>
+    <div class='new-meta-box'>
+      
+        
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2019-08-18T15:33:57+08:00">
+  <a class='notlink'>
+    <i class="fas fa-clock" aria-hidden="true"></i>
+    <p>last updated at Aug 18, 2019</p>
+  </a>
+</div>
+
+        
+      
+        
+          
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/webshell/" rel="nofollow"><i class="fas fa-hashtag" aria-hidden="true"></i>&nbsp;<p>webshell</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/渗透测试/" rel="nofollow"><i class="fas fa-hashtag" aria-hidden="true"></i>&nbsp;<p>渗透测试</p></a></div>
+
+
+        
+      
+        
+          
+  <div class="new-meta-item share -mob-share-list">
+  <div class="-mob-share-list share-body">
+    
+      
+        <a class="-mob-share-qq" title="QQ好友" rel="external nofollow noopener noreferrer"
+          
+          href="http://connect.qq.com/widget/shareqq/index.html?url=http://boombao.net/2019/08/18/shell-analy/&title=一个shell引发的思考 | tkcharlotte's blog&summary=起因最近在做内部靶场平台题目，其中一道题为爆破一句话木马，拿到key的值。"
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/xaoxuu/assets@19.1.9/logo/128/qq.png">
+          
+        </a>
+      
+    
+      
+        <a class="-mob-share-qzone" title="QQ空间" rel="external nofollow noopener noreferrer"
+          
+          href="https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=http://boombao.net/2019/08/18/shell-analy/&title=一个shell引发的思考 | tkcharlotte's blog&summary=起因最近在做内部靶场平台题目，其中一道题为爆破一句话木马，拿到key的值。"
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/xaoxuu/assets@19.1.9/logo/128/qzone.png">
+          
+        </a>
+      
+    
+      
+        <a class="-mob-share-weibo" title="微博" rel="external nofollow noopener noreferrer"
+          
+          href="http://service.weibo.com/share/share.php?url=http://boombao.net/2019/08/18/shell-analy/&title=一个shell引发的思考 | tkcharlotte's blog&summary=起因最近在做内部靶场平台题目，其中一道题为爆破一句话木马，拿到key的值。"
+          
+          >
+          
+            <img src="https://cdn.jsdelivr.net/gh/xaoxuu/assets@19.1.9/logo/128/weibo.png">
+          
+        </a>
+      
+    
+  </div>
+</div>
+
+
+
+        
       
     </div>
-    
-      <div class="full-width auto-padding tags">
-        
-          <a href="/tags/webshell/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>webshell</a>
-        
-          <a href="/tags/渗透测试/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>渗透测试</a>
-        
-      </div>
-    
   </section>
-</article>
 
-          </div>
+
         
+        
+      </section>
+    </article>
+  
+
+  
+    <!-- 显示推荐文章和评论 -->
+
+
+
+  <article class="post white-box comments">
+    <section class="article typo">
+      <h4><i class="fas fa-comments fa-fw" aria-hidden="true"></i>&nbsp;Comments</h4>
       
-    
-  </section>
-  
-    
-    <!-- 根据主题中的设置决定是否在archive中针对摘要部分的MathJax公式加载mathjax.js文件 -->
-    
-    
+      
+        <section id="comments">
+          <div id="lv-container" data-id="city" data-uid="MTAyMC80NTYyOC8yMjEzOQ==">
+            <noscript><div><i class='fas fa-exclamation-triangle'>&nbsp;Unable to load Livere, please make sure your network can access.</div></noscript>
+          </div>
+        </section>
+      
+      
+      
+    </section>
+  </article>
+
 
   
 
 
-	
+
+
+<!-- 根据页面mathjax变量决定是否加载MathJax数学公式js -->
+
+
+
+  <script>
+    window.subData = {
+      title: '一个shell引发的思考',
+      tools: true
+    }
+  </script>
+
+
 </div>
 <aside class='l_side'>
   
@@ -409,6 +558,20 @@
           
           
             
+  <section class='widget toc-wrapper'>
+    
+<header class='material'>
+  <div><i class="fas fa-list fa-fw" aria-hidden="true"></i>&nbsp;&nbsp;TOC</div>
+  
+    <div class='wrapper'><a class="s-toc rightBtn" rel="external nofollow noopener noreferrer" href="javascript:void(0)"><i class="fas fa-thumbtack fa-fw"></i></a></div>
+  
+</header>
+
+    <div class='content material'>
+      <ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#起因"><span class="toc-text">起因</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#经过"><span class="toc-text">经过</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#第一种-敏感函数"><span class="toc-text">第一种  敏感函数</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#第二种-三方组件"><span class="toc-text">第二种 三方组件</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#第三种-LD-PRELOAD"><span class="toc-text">第三种 LD_PRELOAD</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#第四种-mod-cgi-htaccess"><span class="toc-text">第四种  mod_cgi+.htaccess</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#第五种-自定义语句"><span class="toc-text">第五种 自定义语句</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#参考链接"><span class="toc-text">参考链接</span></a></li></ol>
+    </div>
+  </section>
+
 
           
         
@@ -625,14 +788,6 @@ setInterval("createtime()",250);
 <script>setLoadingBarProgress(80);</script>
 
 
-
-
-	<!-- 根据主题中的设置决定是否在archive中针对摘要部分的MathJax公式加载mathjax.js文件 -->
-	
-
-	
-
-
       <script>setLoadingBarProgress(60);</script>
     </div>
     <a class="s-top fas fa-arrow-up fa-fw" href='javascript:void(0)'></a>
@@ -689,6 +844,17 @@ setInterval("createtime()",250);
 
 
 
+
+  <script type="text/javascript">
+    (function(d, s) {
+      var j, e = d.getElementsByTagName(s)[0];
+      if (typeof LivereTower === 'function') { return; }
+      j = d.createElement(s);
+      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+      j.async = true;
+      e.parentNode.insertBefore(j, e);
+    })(document, 'script');
+  </script>
 
 
 

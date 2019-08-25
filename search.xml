@@ -4,6 +4,31 @@
   
     
     <entry>
+      <title>mysql隐式类型转换及其安全问题</title>
+      <link href="/2019/08/25/fasle-mysql-injection/"/>
+      <url>/2019/08/25/fasle-mysql-injection/</url>
+      
+        <content type="html"><![CDATA[<p>测试时发现的一点小问题。</p><a id="more"></a><p>所谓的隐式类型转换，就是在不使用转换函数的情况下，默认转换了类型，比方说定义一个<code>varchar</code>变量<code>id</code>，传入了一个非预期类型的值，就会转换类型然后带入语句查询。说到底是忽略了不同数据类型之间是否兼容。</p><p>隐式类型转换有时会导致无法使用索引的风险，尤其是在高并发的情况下，不走索引就会全盘搜索，进行N多次I/O操作，占用很多资源而且浪费时间。</p><h4 id="规则"><a href="#规则" class="headerlink" title="规则"></a>规则</h4><p>看一下转换规则：</p><p><a href="https://dev.mysql.com/doc/refman/5.7/en/type-conversion.html" target="_blank" rel="noopener">mysql官方文档</a></p><p>翻译过来的规则如下(半机翻)：</p><ul><li>如果是一个或两个参数<code>NULL</code>，则比较的结果是<code>NULL</code>，除了<code>NULL</code>-safe <a href="https://dev.mysql.com/doc/refman/5.7/en/comparison-operators.html#operator_equal-to" target="_blank" rel="noopener"><code>&lt;=&gt;</code></a> 等式比较运算符。因为<code>NULL &lt;=&gt; NULL</code>，结果是真的。无需转换。</li><li>如果比较操作中的两个参数都是字符串，则将它们作为字符串进行比较。</li><li>如果两个参数都是整数，则将它们作为整数进行比较。</li><li>如果不与数字进行比较，十六进制值将被视为二进制字符串。</li><li>如果其中一个参数是<code>TIMESTAMP</code> 或<code>DATETIME</code>列而另一个参数是常量，则在执行比较之前将常量转换为时间戳。</li><li>有一个参数是 decimal 类型，如果另外一个参数是 decimal 或者整数，会将整数转换为 decimal 后进行比较，如果另外一个参数是浮点数，则会把 decimal 转换为浮点数进行比较.</li><li>所有其他情况下，两个参数都会被转换为浮点数再进行比较.</li></ul><h4 id="测试实例"><a href="#测试实例" class="headerlink" title="测试实例"></a>测试实例</h4><p><code>test_table</code>表中有<code>username</code>字段，<code>varchar</code>类型</p><p><fancybox><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190825151001.png" alt></fancybox></p><p>正常情况下：</p><fancybox><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190825151108.png" alt></p></fancybox><p></p><p>当我们输入0时，</p><p><fancybox><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190825151353.png" alt></fancybox></p><p>会返回全部的数据，这是为什么？</p><p>看上边的规则，最后一条，其他情况下，会转换成浮点数进行比较，字符串转浮点数会失败，就像php弱类型一样，mysql有没有类似的机制呢？尝试一下</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; select 1=&apos;aaa&apos;,1=&apos;1aaa&apos;,1=&apos;2aaa&apos;,1=&apos;123aaa&apos;,1=1.0;</span><br><span class="line">+---------+----------+----------+------------+-------+</span><br><span class="line">| 1=&apos;aaa&apos; | 1=&apos;1aaa&apos; | 1=&apos;2aaa&apos; | 1=&apos;123aaa&apos; | 1=1.0 |</span><br><span class="line">+---------+----------+----------+------------+-------+</span><br><span class="line">|       0 |        1 |        0 |          0 |     1 |</span><br><span class="line">+---------+----------+----------+------------+-------+</span><br><span class="line">1 row in set, 4 warnings (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; select 1=&apos;aaa&apos;,1=&apos;1aaa&apos;,2=&apos;2aaa&apos;,123=&apos;123aaa&apos;,1=1.0;</span><br><span class="line">+---------+----------+----------+--------------+-------+</span><br><span class="line">| 1=&apos;aaa&apos; | 1=&apos;1aaa&apos; | 2=&apos;2aaa&apos; | 123=&apos;123aaa&apos; | 1=1.0 |</span><br><span class="line">+---------+----------+----------+--------------+-------+</span><br><span class="line">|       0 |        1 |        1 |            1 |     1 |</span><br><span class="line">+---------+----------+----------+--------------+-------+</span><br><span class="line">1 row in set, 4 warnings (0.00 sec)</span><br><span class="line"></span><br><span class="line">mysql&gt; select 2 = &apos;a2&apos;;</span><br><span class="line">+----------+</span><br><span class="line">| 2 = &apos;a2&apos; |</span><br><span class="line">+----------+</span><br><span class="line">|        0 |</span><br><span class="line">+----------+</span><br><span class="line">1 row in set, 1 warning (0.00 sec)</span><br></pre></td></tr></table></figure><p>从上边可以看出，字符串转成浮点数时会失败，如果字符串开头为数字，会在字母处截断，只取数字作为转换后的结果，所以<code>username=0</code>时会返回所有的结果，因为插入的数据都不是以数字开头的，转换时都会转成0，0=0，满足条件所以输出。</p><h4 id="sql注入中的利用"><a href="#sql注入中的利用" class="headerlink" title="sql注入中的利用"></a>sql注入中的利用</h4><p>查了查资料，有大佬已经总结过了，陕西省网络安全大赛中出过一道这样的题目，详情可以看<a href="https://www.anquanke.com/post/id/86021" target="_blank" rel="noopener">这里</a></p><h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><p><a href="https://dev.mysql.com/doc/refman/5.7/en/type-conversion.html" target="_blank" rel="noopener">https://dev.mysql.com/doc/refman/5.7/en/type-conversion.html</a></p><p><a href="https://www.anquanke.com/post/id/86021" target="_blank" rel="noopener">https://www.anquanke.com/post/id/86021</a></p><p><a href="https://www.cnblogs.com/rollenholt/p/5442825.html" target="_blank" rel="noopener">https://www.cnblogs.com/rollenholt/p/5442825.html</a></p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 安全 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> sql注入 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>mysql注入备忘录(不断更新...)</title>
       <link href="/2019/08/22/mysql-injection-guide/"/>
       <url>/2019/08/22/mysql-injection-guide/</url>

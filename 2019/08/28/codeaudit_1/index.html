@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   
-  <title>Category: 安全 | tkcharlotte&#39;s blog</title>
+  <title>tkcharlotte&#39;s blog</title>
   
   
 
@@ -44,7 +44,7 @@
   
   
   <div class="cover-wrapper">
-    <cover class='cover  half'>
+    <cover class='cover post half'>
       
         
   <h1 class='title'>tkcharlotte's blog</h1>
@@ -238,29 +238,12 @@
 
   <div class="l_body">
     <div class='body-wrapper'>
-      
-<div class='l_main'>
+      <div class='l_main'>
   
-    
-      
-  <section class="post-list">
-    
-      
-        
-          
-        
-          
-        
-          
-        
-      
-    
-    
-      
-        
-          <div class='post-wrapper'>
-            <article class="post reveal ">
+
   
+    <article id="post" class="post white-box article-type-post" itemscope itemprop="blogPost">
+      
 
 
   <section class='meta'>
@@ -269,11 +252,13 @@
     <div class="meta" id="header-meta">
       
         
-  <h2 class="title">
-    <a href="/2019/08/25/fasle-mysql-injection/">
-      mysql隐式类型转换及其安全问题
-    </a>
-  </h2>
+  
+    <h1 class="title">
+      <a href="/2019/08/28/codeaudit_1/">
+        2019-08-28
+      </a>
+    </h1>
+  
 
 
       
@@ -299,7 +284,7 @@
             <div class="new-meta-item date">
   <a class='notlink'>
     <i class="fas fa-calendar-alt" aria-hidden="true"></i>
-    <p>2019-08-25</p>
+    <p>2019-08-28</p>
   </a>
 </div>
 
@@ -307,19 +292,13 @@
         
           
             
-  
-  <div class='new-meta-item category'>
-    <a href='/categories/安全/' rel="nofollow">
-      <i class="fas fa-folder-open" aria-hidden="true"></i>
-      <p>安全</p>
-    </a>
-  </div>
-
 
           
         
           
             
+  
+
 
           
         
@@ -336,256 +315,137 @@
   </section>
 
 
-  <section class="article typo">
-    <div class="article-entry" itemprop="articleBody">
-      <p>测试时发现的一点小问题。</p>
-      
-        <div class="readmore">
-          <a href="/2019/08/25/fasle-mysql-injection/" class="flat-box">
-            <i class="fas fa-book-open fa-fw" aria-hidden="true"></i>
-            阅读全文
-          </a>
+	  
+	  
+      <section class="article typo">
+        <div class="article-entry" itemprop="articleBody">
+          <h4 id="UQcms"><a href="#UQcms" class="headerlink" title="UQcms"></a>UQcms</h4><h5 id="1-系统重装漏洞"><a href="#1-系统重装漏洞" class="headerlink" title="1.系统重装漏洞"></a>1.系统重装漏洞</h5><h6 id="利用条件"><a href="#利用条件" class="headerlink" title="利用条件"></a>利用条件</h6><p> 安装完成后未删除<code>install.php</code>文件。</p>
+<h6 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h6><p>定位到<code>install.php</code>，第6行位置</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190828092758.png" alt></p>
+<p>判断了是否存在<code>install.lock</code>文件，然后没有下文了。。。可能是开发失误。</p>
+<h6 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h6><p>安装完成</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190828093141.png" alt></p>
+<p>然后访问<code>install.php</code> 可以重装</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190828093215.png" alt></p>
+<h5 id="2-后台xss-滑稽"><a href="#2-后台xss-滑稽" class="headerlink" title="2.后台xss(滑稽)"></a>2.后台xss(滑稽)</h5><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190828101752.png" alt></p>
+<h5 id="3-sql语句暴露"><a href="#3-sql语句暴露" class="headerlink" title="3.sql语句暴露"></a>3.sql语句暴露</h5><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190828153436.png" alt></p>
+<h5 id="4-后台sql注入-鸡肋"><a href="#4-后台sql注入-鸡肋" class="headerlink" title="4.后台sql注入(鸡肋)"></a>4.后台sql注入(鸡肋)</h5><h6 id="漏洞复现-1"><a href="#漏洞复现-1" class="headerlink" title="漏洞复现"></a>漏洞复现</h6><p>访问<code>url:</code> <code>http://127.0.0.1/uqcms/index.php/admin/ad/save</code></p>
+<p>post提交数据 <code>alias=1#&amp;id=1 and updatexml(1,concat(0x7e,(select/**/user()),0x7e),1)#&amp;name=2&amp;px=0</code></p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190828160305.png" alt></p>
+<h6 id="漏洞分析-1"><a href="#漏洞分析-1" class="headerlink" title="漏洞分析"></a>漏洞分析</h6><p><code>admin/ad_class.php</code> 第62行</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190828161448.png" alt></p>
+<p>通过P函数获取id的值，跟进P函数</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190828161531.png" alt></p>
+<p>因为传入的是<code>false</code>,去掉空格后直接返回，没有任何过滤。</p>
+<h5 id="5-前台sql注入"><a href="#5-前台sql注入" class="headerlink" title="5. 前台sql注入"></a>5. 前台sql注入</h5><h6 id="利用条件-1"><a href="#利用条件-1" class="headerlink" title="利用条件"></a>利用条件</h6><p>需要注册一个会员账号，</p>
+<p>在修改收货地址处抓包，修改id参数，id参数未过滤，可报错注入，得到数据。</p>
+<h6 id="漏洞复现-2"><a href="#漏洞复现-2" class="headerlink" title="漏洞复现"></a>漏洞复现</h6><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190829140746.png" alt></p>
+<h6 id="漏洞分析-2"><a href="#漏洞分析-2" class="headerlink" title="漏洞分析"></a>漏洞分析</h6><p><code>home/address.class.php</code> 文件，第35行位置</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190829141016.png" alt></p>
+<p>通过P函数获取后直接传入sql语句进行查询。</p>
+<p>sql注入在这套cms里应该是不少…，开发者把希望寄托在了<code>360_safe.php</code>提供的过滤规则上… 虽然过滤大部分，但是没有过滤报错函数，POST方式没有过滤单引号。</p>
+
         </div>
-      
-    </div>
-    
-      <div class="full-width auto-padding tags">
-        
-          <a href="/tags/sql注入/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>sql注入</a>
-        
-      </div>
-    
-  </section>
-</article>
-
-          </div>
-        
-      
-        
-          <div class='post-wrapper'>
-            <article class="post reveal ">
-  
-
-
-  <section class='meta'>
-    
-    
-    <div class="meta" id="header-meta">
-      
-        
-  <h2 class="title">
-    <a href="/2019/08/22/mysql-injection-guide/">
-      mysql注入备忘录(不断更新...)
-    </a>
-  </h2>
-
-
-      
-      <div class='new-meta-box'>
         
           
-        
-          
-            
-  <div class='new-meta-item author'>
-    <a href="https://boombao.net" rel="nofollow">
-      
-        <i class="fas fa-user" aria-hidden="true"></i>
-      
-      <p>tk</p>
-    </a>
-  </div>
 
 
-          
+  <section class='meta' id="footer-meta">
+    <hr>
+    <div class='new-meta-box'>
+      
         
-          
-            <div class="new-meta-item date">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2019-08-29T17:43:45+08:00">
   <a class='notlink'>
-    <i class="fas fa-calendar-alt" aria-hidden="true"></i>
-    <p>2019-08-22</p>
+    <i class="fas fa-clock" aria-hidden="true"></i>
+    <p>最后更新于 2019年8月29日</p>
   </a>
 </div>
 
-          
+        
+      
         
           
-            
+
+        
+      
+        
+          
+
+        
+      
+    </div>
+  </section>
+
+
+        
+        
+            <div class="prev-next">
+                
+                
+                    <section class="next">
+                        <span class="art-item-right" aria-hidden="true">
+                            <h6>下一页&nbsp;<i class="fas fa-chevron-right" aria-hidden="true"></i></h6>
+                            <h4>
+                                <a href="/2019/08/25/fasle-mysql-injection/" rel="prev" title="mysql隐式类型转换及其安全问题">
+                                    
+                                        mysql隐式类型转换及其安全问题
+                                    
+                                </a>
+                            </h4>
+                            
+                                
+                                <h6 class="tags">
+                                    <a class="tag" href="/tags/sql注入/"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i>sql注入</a>
+                                </h6>
+                            
+                        </span>
+                    </section>
+                
+            </div>
+        
+      </section>
+    </article>
   
-  <div class='new-meta-item category'>
-    <a href='/categories/安全/' rel="nofollow">
-      <i class="fas fa-folder-open" aria-hidden="true"></i>
-      <p>安全</p>
-    </a>
-  </div>
+
+  
+    <!-- 显示推荐文章和评论 -->
 
 
-          
-        
-          
-            
 
-          
-        
-          
-            
-
-          
-        
-      </div>
+  <article class="post white-box comments">
+    <section class="article typo">
+      <h4><i class="fas fa-comments fa-fw" aria-hidden="true"></i>&nbsp;评论</h4>
       
-        <hr>
       
-    </div>
-  </section>
-
-
-  <section class="article typo">
-    <div class="article-entry" itemprop="articleBody">
-      <p>记录一下<code>mysql</code>手工注入语句，随拿随用。</p>
-      
-        <div class="readmore">
-          <a href="/2019/08/22/mysql-injection-guide/" class="flat-box">
-            <i class="fas fa-book-open fa-fw" aria-hidden="true"></i>
-            阅读全文
-          </a>
-        </div>
-      
-    </div>
-    
-      <div class="full-width auto-padding tags">
-        
-          <a href="/tags/sql注入/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>sql注入</a>
-        
-          <a href="/tags/web安全/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>web安全</a>
-        
-      </div>
-    
-  </section>
-</article>
-
+        <section id="comments">
+          <div id="lv-container" data-id="city" data-uid="MTAyMC80NTYyOC8yMjEzOQ==">
+            <noscript><div><i class='fas fa-exclamation-triangle'>&nbsp;无法加载Livere评论系统，请确保您的网络能够正常访问。</div></noscript>
           </div>
-        
+        </section>
       
-        
-          <div class='post-wrapper'>
-            <article class="post reveal ">
-  
-
-
-  <section class='meta'>
-    
-    
-    <div class="meta" id="header-meta">
       
-        
-  <h2 class="title">
-    <a href="/2019/08/18/shell-analy/">
-      一个shell引发的思考
-    </a>
-  </h2>
-
-
       
-      <div class='new-meta-box'>
-        
-          
-        
-          
-            
-  <div class='new-meta-item author'>
-    <a href="https://boombao.net" rel="nofollow">
-      
-        <i class="fas fa-user" aria-hidden="true"></i>
-      
-      <p>tk</p>
-    </a>
-  </div>
+    </section>
+  </article>
 
-
-          
-        
-          
-            <div class="new-meta-item date">
-  <a class='notlink'>
-    <i class="fas fa-calendar-alt" aria-hidden="true"></i>
-    <p>2019-08-18</p>
-  </a>
-</div>
-
-          
-        
-          
-            
-  
-  <div class='new-meta-item category'>
-    <a href='/categories/安全/' rel="nofollow">
-      <i class="fas fa-folder-open" aria-hidden="true"></i>
-      <p>安全</p>
-    </a>
-  </div>
-
-
-          
-        
-          
-            
-
-          
-        
-          
-            
-
-          
-        
-      </div>
-      
-        <hr>
-      
-    </div>
-  </section>
-
-
-  <section class="article typo">
-    <div class="article-entry" itemprop="articleBody">
-      <h4 id="起因"><a href="#起因" class="headerlink" title="起因"></a>起因</h4><p>最近在做内部靶场平台题目，其中一道题为爆破一句话木马，拿到key的值。</p>
-      
-        <div class="readmore">
-          <a href="/2019/08/18/shell-analy/" class="flat-box">
-            <i class="fas fa-book-open fa-fw" aria-hidden="true"></i>
-            阅读全文
-          </a>
-        </div>
-      
-    </div>
-    
-      <div class="full-width auto-padding tags">
-        
-          <a href="/tags/webshell/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>webshell</a>
-        
-          <a href="/tags/渗透测试/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>渗透测试</a>
-        
-      </div>
-    
-  </section>
-</article>
-
-          </div>
-        
-      
-    
-  </section>
-  
-    
-    <!-- 根据主题中的设置决定是否在archive中针对摘要部分的MathJax公式加载mathjax.js文件 -->
-    
-    
 
   
 
 
-    
-  
+
+
+<!-- 根据页面mathjax变量决定是否加载MathJax数学公式js -->
+
+
+
+  <script>
+    window.subData = {
+      title: '',
+      tools: true
+    }
+  </script>
+
 
 </div>
 <aside class='l_side'>
@@ -615,6 +475,20 @@
           
           
             
+  <section class='widget toc-wrapper'>
+    
+<header class='material'>
+  <div><i class="fas fa-list fa-fw" aria-hidden="true"></i>&nbsp;&nbsp;本文目录</div>
+  
+    <div class='wrapper'><a class="s-toc rightBtn" rel="external nofollow noopener noreferrer" href="javascript:void(0)"><i class="fas fa-thumbtack fa-fw"></i></a></div>
+  
+</header>
+
+    <div class='content material'>
+      <ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#UQcms"><span class="toc-text">UQcms</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#1-系统重装漏洞"><span class="toc-text">1.系统重装漏洞</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#利用条件"><span class="toc-text">利用条件</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#漏洞分析"><span class="toc-text">漏洞分析</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#漏洞复现"><span class="toc-text">漏洞复现</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#2-后台xss-滑稽"><span class="toc-text">2.后台xss(滑稽)</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#3-sql语句暴露"><span class="toc-text">3.sql语句暴露</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#4-后台sql注入-鸡肋"><span class="toc-text">4.后台sql注入(鸡肋)</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#漏洞复现-1"><span class="toc-text">漏洞复现</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#漏洞分析-1"><span class="toc-text">漏洞分析</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#5-前台sql注入"><span class="toc-text">5. 前台sql注入</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#利用条件-1"><span class="toc-text">利用条件</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#漏洞复现-2"><span class="toc-text">漏洞复现</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#漏洞分析-2"><span class="toc-text">漏洞分析</span></a></li></ol></li></ol></li></ol>
+    </div>
+  </section>
+
 
           
         
@@ -708,10 +582,6 @@
     <div class='content material'>
       <ul class="entry">
         
-          <li><a class="flat-box" title="/categories/代码审计/" href="/categories/代码审计/"><div class='name'>代码审计</div><div class='badge'>(1)</div></a></li>
-        
-          <li><a class="flat-box child" title="/categories/代码审计/安全/" href="/categories/代码审计/安全/"><div class='name'>安全</div><div class='badge'>(1)</div></a></li>
-        
           <li><a class="flat-box" title="/categories/安全/" href="/categories/安全/"><div class='name'>安全</div><div class='badge'>(3)</div></a></li>
         
       </ul>
@@ -743,7 +613,7 @@
 </header>
 
     <div class='content material'>
-      <a href="/tags/code/" style="font-size: 14px; color: #999">code</a> <a href="/tags/sql注入/" style="font-size: 24px; color: #555">sql注入</a> <a href="/tags/webshell/" style="font-size: 14px; color: #999">webshell</a> <a href="/tags/web安全/" style="font-size: 14px; color: #999">web安全</a> <a href="/tags/代码审计/" style="font-size: 14px; color: #999">代码审计</a> <a href="/tags/渗透测试/" style="font-size: 14px; color: #999">渗透测试</a>
+      <a href="/tags/sql注入/" style="font-size: 24px; color: #555">sql注入</a> <a href="/tags/webshell/" style="font-size: 14px; color: #999">webshell</a> <a href="/tags/web安全/" style="font-size: 14px; color: #999">web安全</a> <a href="/tags/渗透测试/" style="font-size: 14px; color: #999">渗透测试</a>
     </div>
   </section>
 
@@ -789,7 +659,7 @@
     } 
 setInterval("createtime()",250);
 </script>
-<span class="post-count"> | 字数统计：3.4k</span>
+<span class="post-count"> | 字数统计：3.3k</span>
 </footer>
 <script>setLoadingBarProgress(80);</script>
 
@@ -883,6 +753,17 @@ setInterval("createtime()",250);
 
 
 
+
+  <script type="text/javascript">
+    (function(d, s) {
+      var j, e = d.getElementsByTagName(s)[0];
+      if (typeof LivereTower === 'function') { return; }
+      j = d.createElement(s);
+      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+      j.async = true;
+      e.parentNode.insertBefore(j, e);
+    })(document, 'script');
+  </script>
 
 
 

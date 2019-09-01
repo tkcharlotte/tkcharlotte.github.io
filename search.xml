@@ -4,6 +4,35 @@
   
     
     <entry>
+      <title>某CMS代码审计</title>
+      <link href="/2019/09/01/audit-1/"/>
+      <url>/2019/09/01/audit-1/</url>
+      
+        <content type="html"><![CDATA[<p>记录一下代码审计的过程。</p><a id="more"></a><h5 id="1-系统重装漏洞"><a href="#1-系统重装漏洞" class="headerlink" title="1.系统重装漏洞"></a>1.系统重装漏洞</h5><h6 id="利用条件"><a href="#利用条件" class="headerlink" title="利用条件"></a>利用条件</h6><p> 安装完成后未删除<code>install.php</code>文件。</p><h6 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h6><p>定位到<code>install.php</code>，第6行位置</p><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190828092758.png" alt></p><p>判断了是否存在<code>install.lock</code>文件，然后没有下文了。。。可能是开发失误。</p><h6 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h6><p>安装完成</p><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190828093141.png" alt></p><p>然后访问<code>install.php</code> 可以重装</p><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190828093215.png" alt></p><h5 id="2-后台xss-滑稽"><a href="#2-后台xss-滑稽" class="headerlink" title="2.后台xss(滑稽)"></a>2.后台xss(滑稽)</h5><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190828101752.png" alt></p><h5 id="3-sql语句暴露"><a href="#3-sql语句暴露" class="headerlink" title="3.sql语句暴露"></a>3.sql语句暴露</h5><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190828153436.png" alt></p><h5 id="4-后台sql注入-鸡肋"><a href="#4-后台sql注入-鸡肋" class="headerlink" title="4.后台sql注入(鸡肋)"></a>4.后台sql注入(鸡肋)</h5><h6 id="漏洞复现-1"><a href="#漏洞复现-1" class="headerlink" title="漏洞复现"></a>漏洞复现</h6><p>访问<code>url:</code> <code>http://127.0.0.1/uqcms/index.php/admin/ad/save</code></p><p>post提交数据 <code>alias=1#&amp;id=1 and updatexml(1,concat(0x7e,(select/**/user()),0x7e),1)#&amp;name=2&amp;px=0</code></p><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190828160305.png" alt></p><h6 id="漏洞分析-1"><a href="#漏洞分析-1" class="headerlink" title="漏洞分析"></a>漏洞分析</h6><p><code>admin/ad_class.php</code> 第62行</p><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190828161448.png" alt></p><p>通过P函数获取id的值，跟进P函数</p><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190828161531.png" alt></p><p>因为传入的是<code>false</code>,去掉空格后直接返回，没有任何过滤。</p><h5 id="5-前台sql注入"><a href="#5-前台sql注入" class="headerlink" title="5. 前台sql注入"></a>5. 前台sql注入</h5><h6 id="利用条件-1"><a href="#利用条件-1" class="headerlink" title="利用条件"></a>利用条件</h6><p>需要注册一个会员账号，</p><p>在修改收货地址处抓包，修改id参数，id参数未过滤，可报错注入，得到数据。</p><h6 id="漏洞复现-2"><a href="#漏洞复现-2" class="headerlink" title="漏洞复现"></a>漏洞复现</h6><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190829140746.png" alt></p><h6 id="漏洞分析-2"><a href="#漏洞分析-2" class="headerlink" title="漏洞分析"></a>漏洞分析</h6><p><code>home/address.class.php</code> 文件，第35行位置</p><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190829141016.png" alt></p><p>通过P函数获取后直接传入sql语句进行查询。</p><p>sql注入在这套cms里应该是不少…，以上只是举个例子，开发者把希望寄托在了<code>360_safe.php</code>提供的过滤规则上… ，虽然过滤大部分，但是没有过滤报错函数，POST方式没有过滤单引号。</p><h5 id="6-文件上传"><a href="#6-文件上传" class="headerlink" title="6. 文件上传"></a>6. 文件上传</h5><p>本地上传正常图片也不行，没进一步测试，附上先知社区大佬分析</p><p><a href="https://xz.aliyun.com/t/6075" target="_blank" rel="noopener">https://xz.aliyun.com/t/6075</a></p><h5 id="最后"><a href="#最后" class="headerlink" title="最后"></a>最后</h5><p>代码审计的能力太弱，希望自己能坚持下去，写成一个系列文章吧！</p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 代码审计 </category>
+          
+          <category> 安全 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> code </tag>
+            
+            <tag> 代码审计 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>mysql隐式类型转换及其安全问题</title>
       <link href="/2019/08/25/fasle-mysql-injection/"/>
       <url>/2019/08/25/fasle-mysql-injection/</url>

@@ -15,14 +15,10 @@
           
           <category> code </category>
           
-          <category> 安全 </category>
-          
       </categories>
       
       
         <tags>
-            
-            <tag> code </tag>
             
             <tag> 代码审计 </tag>
             
@@ -71,16 +67,12 @@
       
       <categories>
           
-          <category> 代码审计 </category>
-          
-          <category> 安全 </category>
+          <category> code </category>
           
       </categories>
       
       
         <tags>
-            
-            <tag> code </tag>
             
             <tag> 代码审计 </tag>
             

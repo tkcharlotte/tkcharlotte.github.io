@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   
-  <title>tkcharlotte&#39;s blog</title>
+  <title>CMS代码审计(二) | tkcharlotte&#39;s blog</title>
   
   
 
@@ -44,7 +44,7 @@
   
   
   <div class="cover-wrapper">
-    <cover class='cover  half'>
+    <cover class='cover post half'>
       
         
   <h1 class='title'>tkcharlotte's blog</h1>
@@ -240,30 +240,10 @@
     <div class='body-wrapper'>
       <div class='l_main'>
   
-  <section class="post-list">
-    
-      
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-          
-        
-      
-    
-    
-      
-        
-          <div class='post-wrapper'>
-            <article class="post reveal ">
+
   
+    <article id="post" class="post white-box article-type-post" itemscope itemprop="blogPost">
+      
 
 
   <section class='meta'>
@@ -272,11 +252,13 @@
     <div class="meta" id="header-meta">
       
         
-  <h2 class="title">
-    <a href="/2019/09/09/audit-2/">
-      CMS代码审计(二)
-    </a>
-  </h2>
+  
+    <h1 class="title">
+      <a href="/2019/09/09/audit-2/">
+        CMS代码审计(二)
+      </a>
+    </h1>
+  
 
 
       
@@ -323,6 +305,8 @@
         
           
             
+  
+
 
           
         
@@ -339,573 +323,148 @@
   </section>
 
 
-  <section class="article typo">
-    <div class="article-entry" itemprop="articleBody">
-      <h4 id="初步分析"><a href="#初步分析" class="headerlink" title="初步分析"></a>初步分析</h4><p>想找点小型的<code>cms</code>审计一下练练手，谷歌一搜，跳出来一个<code>xiaocms</code>，就决定是你了~</p>
-      
-        <div class="readmore">
-          <a href="/2019/09/09/audit-2/" class="flat-box">
-            <i class="fas fa-book-open fa-fw" aria-hidden="true"></i>
-            阅读全文
-          </a>
+	  
+	  
+      <section class="article typo">
+        <div class="article-entry" itemprop="articleBody">
+
+			<h4 id="初步分析"><a href="#初步分析" class="headerlink" title="初步分析"></a>初步分析</h4><p>想找点小型的<code>cms</code>审计一下练练手，谷歌一搜，跳出来一个<code>xiaocms</code>，就决定是你了~</p>
+<a id="more"></a>
+
+<p>这套<code>cms</code>最新版发布时间是14年，应该是停止更新了。</p>
+<p><code>MVC</code>架构，看官网介绍还是用了<code>PDO</code>预编译…  注入基本是没戏了</p>
+<p>从系统入口开始，<code>include xiaocms.php</code>,<code>xiaocms.php</code>定义了一些全局变量，路由解析规则，控制器加载规则等东西。没有<code>a</code>和<code>c</code>参数时默认访问<code>index</code>方法。对控制器访问做了一定的限制，过滤了斜杠/。</p>
+<p>作者重写了<code>get</code>和<code>post</code>方法，对传入的参数使用<code>htmlspecialchars</code>过滤了<code>&lt;&gt;&quot;</code>等。</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190909180928.png" alt></p>
+<p>获取<code>ip</code>的函数也做了限制，哇难受的一批</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190909181023.png" alt></p>
+<p>太菜了，转战后台。</p>
+<h4 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h4><p>假设进入了后台，就要考虑怎么<code>getshell</code>，最平常的思路就是文件上传。看一下这套<code>cms</code>的上传逻辑。</p>
+<p><code>upload.class.php</code>中</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190909181219.png" alt></p>
+<p>跟进函数</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190909181327.png" alt></p>
+<p>看一下<code>$limit_type</code>是个啥，跟进去发现是个变量… 不应该哇，再一看，通过<code>set_limit_type</code>函数设置白名单，这…</p>
+<p>全局搜索一下<code>upload</code>函数，看看调用情况。找来找去都在<code>admin/uploadfile.php</code>中。</p>
+<p>通读该文件，各种上传方式实现，编辑器上传，直接上传等。</p>
+<p>在编辑器上传和<code>uploadify_upload</code>两处调用了<code>upload</code>函数,只有后者才能控制type。</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190909182021.png" alt></p>
+<p>后边的判断是加水印的，无关痛痒。</p>
+<p>本地构造一个表单手动上传。</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190909183644.png" alt></p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190909183707.png" alt></p>
+<p>后台也有模板管理的功能，一开始看后缀都是<code>html</code>就没多想，后来看其他师傅的分析才明白过来..模板也是要被包含进<code>php</code>文件的, 太菜了(⸝⸝⸝ᵒ̴̶̥́ ⌑ ᵒ̴̶̣̥̀⸝⸝⸝)</p>
+<p>所以可以后台编辑模板，写入<code>phpinfo</code>,就能执行。分析一下原因</p>
+<p>后台编辑模板<code>url</code>为<code>http://127.0.0.1/xiaocms/admin/index.php?c=template&amp;a=edit&amp;dir=&amp;file=index.html</code></p>
+<p><code>template.php</code>中的<code>editAction</code>方法</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190909184827.png" alt></p>
+<p>判断<code>file</code>的后缀是否合法，然后使用<code>file_put_contents</code>把<code>file_content</code>的值写入文件，注意一下，本来<code>post</code>方法使用了<code>htmlspecialchars</code>函数进行过滤，此处又进行了解码,所以写入的还是原来传入的内容。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>审计时要白+黑，白盒+黑盒测试一起，关注一下底层的一些过滤函数以及sql处理 上传逻辑等，根据功能点进行代码分析，最重要的是有耐心吧=。= 这次看的还是不够仔细啊，后台还可以尝试配置文件写shell，但是会多一个单引号，导致代码不解析，因为存在<code>var_export</code>的原因，这一点在审计<code>minicms</code>时也遇见过。</p>
+<p><code>up up!!!(ง •̀-•́)ง</code></p>
+
         </div>
-      
-    </div>
-    
-      <div class="full-width auto-padding tags">
-        
-          <a href="/tags/code/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>code</a>
-        
-          <a href="/tags/代码审计/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>代码审计</a>
-        
-      </div>
-    
-  </section>
-</article>
-
-          </div>
-        
-      
-        
-          <div class='post-wrapper'>
-            <article class="post reveal ">
-  
-
-
-  <section class='meta'>
-    
-    
-    <div class="meta" id="header-meta">
-      
-        
-  <h2 class="title">
-    <a href="/2019/09/04/cobalt-strike-1/">
-      初探cobaltstrike(一)
-    </a>
-  </h2>
-
-
-      
-      <div class='new-meta-box'>
         
           
-        
-          
-            
-  <div class='new-meta-item author'>
-    <a href="https://boombao.net" rel="nofollow">
-      
-        <i class="fas fa-user" aria-hidden="true"></i>
-      
-      <p>tk</p>
-    </a>
-  </div>
 
 
-          
+  <section class='meta' id="footer-meta">
+    <hr>
+    <div class='new-meta-box'>
+      
         
-          
-            <div class="new-meta-item date">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2019-09-09T19:04:09+08:00">
   <a class='notlink'>
-    <i class="fas fa-calendar-alt" aria-hidden="true"></i>
-    <p>2019-09-04</p>
+    <i class="fas fa-clock" aria-hidden="true"></i>
+    <p>最后更新于 2019年9月9日</p>
   </a>
 </div>
 
-          
+        
+      
         
           
-            
   
-  <div class='new-meta-item category'>
-    <a href='/categories/安全工具/' rel="nofollow">
-      <i class="fas fa-folder-open" aria-hidden="true"></i>
-      <p>安全工具</p>
-    </a>
-  </div>
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/code/" rel="nofollow"><i class="fas fa-hashtag" aria-hidden="true"></i>&nbsp;<p>code</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/代码审计/" rel="nofollow"><i class="fas fa-hashtag" aria-hidden="true"></i>&nbsp;<p>代码审计</p></a></div>
 
 
-          
         
-          
-            
-
-          
-        
-          
-            
-
-          
-        
-      </div>
       
-        <hr>
+        
+          
+
+        
       
     </div>
   </section>
 
 
-  <section class="article typo">
-    <div class="article-entry" itemprop="articleBody">
-      <p>趁着有时间，把不懂的学一学(๑•̀ㅂ•́)و✧.</p>
-      
-        <div class="readmore">
-          <a href="/2019/09/04/cobalt-strike-1/" class="flat-box">
-            <i class="fas fa-book-open fa-fw" aria-hidden="true"></i>
-            阅读全文
-          </a>
-        </div>
-      
-    </div>
-    
-      <div class="full-width auto-padding tags">
         
-          <a href="/tags/cobalt-strike/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>cobalt_strike</a>
         
-          <a href="/tags/tools/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>tools</a>
+            <div class="prev-next">
+                
+                
+                    <section class="next">
+                        <span class="art-item-right" aria-hidden="true">
+                            <h6>下一页&nbsp;<i class="fas fa-chevron-right" aria-hidden="true"></i></h6>
+                            <h4>
+                                <a href="/2019/09/04/cobalt-strike-1/" rel="prev" title="初探cobaltstrike(一)">
+                                    
+                                        初探cobaltstrike(一)
+                                    
+                                </a>
+                            </h4>
+                            
+                                
+                                <h6 class="tags">
+                                    <a class="tag" href="/tags/cobalt-strike/"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i>cobalt_strike</a> <a class="tag" href="/tags/tools/"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i>tools</a> <a class="tag" href="/tags/安全/"><i class="fas fa-hashtag fa-fw" aria-hidden="true"></i>安全</a>
+                                </h6>
+                            
+                        </span>
+                    </section>
+                
+            </div>
         
-          <a href="/tags/安全/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>安全</a>
-        
-      </div>
-    
-  </section>
-</article>
+      </section>
+    </article>
+  
 
+  
+    <!-- 显示推荐文章和评论 -->
+
+
+
+  <article class="post white-box comments">
+    <section class="article typo">
+      <h4><i class="fas fa-comments fa-fw" aria-hidden="true"></i>&nbsp;评论</h4>
+      
+      
+        <section id="comments">
+          <div id="lv-container" data-id="city" data-uid="MTAyMC80NTYyOC8yMjEzOQ==">
+            <noscript><div><i class='fas fa-exclamation-triangle'>&nbsp;无法加载Livere评论系统，请确保您的网络能够正常访问。</div></noscript>
           </div>
-        
+        </section>
       
-        
-          <div class='post-wrapper'>
-            <article class="post reveal ">
+      
+      
+    </section>
+  </article>
+
+
   
 
 
-  <section class='meta'>
-    
-    
-    <div class="meta" id="header-meta">
-      
-        
-  <h2 class="title">
-    <a href="/2019/09/01/audit-1/">
-      CMS代码审计(一)
-    </a>
-  </h2>
 
 
-      
-      <div class='new-meta-box'>
-        
-          
-        
-          
-            
-  <div class='new-meta-item author'>
-    <a href="https://boombao.net" rel="nofollow">
-      
-        <i class="fas fa-user" aria-hidden="true"></i>
-      
-      <p>tk</p>
-    </a>
-  </div>
+<!-- 根据页面mathjax变量决定是否加载MathJax数学公式js -->
 
 
-          
-        
-          
-            <div class="new-meta-item date">
-  <a class='notlink'>
-    <i class="fas fa-calendar-alt" aria-hidden="true"></i>
-    <p>2019-09-01</p>
-  </a>
-</div>
 
-          
-        
-          
-            
-  
-  <div class='new-meta-item category'>
-    <a href='/categories/代码审计/安全/' rel="nofollow">
-      <i class="fas fa-folder-open" aria-hidden="true"></i>
-      <p>代码审计&nbsp;/&nbsp;安全</p>
-    </a>
-  </div>
-
-
-          
-        
-          
-            
-
-          
-        
-          
-            
-
-          
-        
-      </div>
-      
-        <hr>
-      
-    </div>
-  </section>
-
-
-  <section class="article typo">
-    <div class="article-entry" itemprop="articleBody">
-      <p>九月第一天，加油哇( •̀_•́ )</p>
-<p>记录一下代码审计的分析流程。</p>
-      
-        <div class="readmore">
-          <a href="/2019/09/01/audit-1/" class="flat-box">
-            <i class="fas fa-book-open fa-fw" aria-hidden="true"></i>
-            阅读全文
-          </a>
-        </div>
-      
-    </div>
-    
-      <div class="full-width auto-padding tags">
-        
-          <a href="/tags/code/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>code</a>
-        
-          <a href="/tags/代码审计/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>代码审计</a>
-        
-      </div>
-    
-  </section>
-</article>
-
-          </div>
-        
-      
-        
-          <div class='post-wrapper'>
-            <article class="post reveal ">
-  
-
-
-  <section class='meta'>
-    
-    
-    <div class="meta" id="header-meta">
-      
-        
-  <h2 class="title">
-    <a href="/2019/08/25/fasle-mysql-injection/">
-      mysql隐式类型转换及其安全问题
-    </a>
-  </h2>
-
-
-      
-      <div class='new-meta-box'>
-        
-          
-        
-          
-            
-  <div class='new-meta-item author'>
-    <a href="https://boombao.net" rel="nofollow">
-      
-        <i class="fas fa-user" aria-hidden="true"></i>
-      
-      <p>tk</p>
-    </a>
-  </div>
-
-
-          
-        
-          
-            <div class="new-meta-item date">
-  <a class='notlink'>
-    <i class="fas fa-calendar-alt" aria-hidden="true"></i>
-    <p>2019-08-25</p>
-  </a>
-</div>
-
-          
-        
-          
-            
-  
-  <div class='new-meta-item category'>
-    <a href='/categories/安全/' rel="nofollow">
-      <i class="fas fa-folder-open" aria-hidden="true"></i>
-      <p>安全</p>
-    </a>
-  </div>
-
-
-          
-        
-          
-            
-
-          
-        
-          
-            
-
-          
-        
-      </div>
-      
-        <hr>
-      
-    </div>
-  </section>
-
-
-  <section class="article typo">
-    <div class="article-entry" itemprop="articleBody">
-      <p>测试时发现的一点小问题。</p>
-      
-        <div class="readmore">
-          <a href="/2019/08/25/fasle-mysql-injection/" class="flat-box">
-            <i class="fas fa-book-open fa-fw" aria-hidden="true"></i>
-            阅读全文
-          </a>
-        </div>
-      
-    </div>
-    
-      <div class="full-width auto-padding tags">
-        
-          <a href="/tags/sql注入/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>sql注入</a>
-        
-      </div>
-    
-  </section>
-</article>
-
-          </div>
-        
-      
-        
-          <div class='post-wrapper'>
-            <article class="post reveal ">
-  
-
-
-  <section class='meta'>
-    
-    
-    <div class="meta" id="header-meta">
-      
-        
-  <h2 class="title">
-    <a href="/2019/08/22/mysql-injection-guide/">
-      mysql注入备忘录(不断更新...)
-    </a>
-  </h2>
-
-
-      
-      <div class='new-meta-box'>
-        
-          
-        
-          
-            
-  <div class='new-meta-item author'>
-    <a href="https://boombao.net" rel="nofollow">
-      
-        <i class="fas fa-user" aria-hidden="true"></i>
-      
-      <p>tk</p>
-    </a>
-  </div>
-
-
-          
-        
-          
-            <div class="new-meta-item date">
-  <a class='notlink'>
-    <i class="fas fa-calendar-alt" aria-hidden="true"></i>
-    <p>2019-08-22</p>
-  </a>
-</div>
-
-          
-        
-          
-            
-  
-  <div class='new-meta-item category'>
-    <a href='/categories/安全/' rel="nofollow">
-      <i class="fas fa-folder-open" aria-hidden="true"></i>
-      <p>安全</p>
-    </a>
-  </div>
-
-
-          
-        
-          
-            
-
-          
-        
-          
-            
-
-          
-        
-      </div>
-      
-        <hr>
-      
-    </div>
-  </section>
-
-
-  <section class="article typo">
-    <div class="article-entry" itemprop="articleBody">
-      <p>记录一下<code>mysql</code>手工注入语句，随拿随用。</p>
-      
-        <div class="readmore">
-          <a href="/2019/08/22/mysql-injection-guide/" class="flat-box">
-            <i class="fas fa-book-open fa-fw" aria-hidden="true"></i>
-            阅读全文
-          </a>
-        </div>
-      
-    </div>
-    
-      <div class="full-width auto-padding tags">
-        
-          <a href="/tags/sql注入/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>sql注入</a>
-        
-          <a href="/tags/web安全/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>web安全</a>
-        
-      </div>
-    
-  </section>
-</article>
-
-          </div>
-        
-      
-        
-          <div class='post-wrapper'>
-            <article class="post reveal ">
-  
-
-
-  <section class='meta'>
-    
-    
-    <div class="meta" id="header-meta">
-      
-        
-  <h2 class="title">
-    <a href="/2019/08/18/shell-analy/">
-      一个shell引发的思考
-    </a>
-  </h2>
-
-
-      
-      <div class='new-meta-box'>
-        
-          
-        
-          
-            
-  <div class='new-meta-item author'>
-    <a href="https://boombao.net" rel="nofollow">
-      
-        <i class="fas fa-user" aria-hidden="true"></i>
-      
-      <p>tk</p>
-    </a>
-  </div>
-
-
-          
-        
-          
-            <div class="new-meta-item date">
-  <a class='notlink'>
-    <i class="fas fa-calendar-alt" aria-hidden="true"></i>
-    <p>2019-08-18</p>
-  </a>
-</div>
-
-          
-        
-          
-            
-  
-  <div class='new-meta-item category'>
-    <a href='/categories/安全/' rel="nofollow">
-      <i class="fas fa-folder-open" aria-hidden="true"></i>
-      <p>安全</p>
-    </a>
-  </div>
-
-
-          
-        
-          
-            
-
-          
-        
-          
-            
-
-          
-        
-      </div>
-      
-        <hr>
-      
-    </div>
-  </section>
-
-
-  <section class="article typo">
-    <div class="article-entry" itemprop="articleBody">
-      <h4 id="起因"><a href="#起因" class="headerlink" title="起因"></a>起因</h4><p>最近在做内部靶场平台题目，其中一道题为爆破一句话木马，拿到key的值。</p>
-      
-        <div class="readmore">
-          <a href="/2019/08/18/shell-analy/" class="flat-box">
-            <i class="fas fa-book-open fa-fw" aria-hidden="true"></i>
-            阅读全文
-          </a>
-        </div>
-      
-    </div>
-    
-      <div class="full-width auto-padding tags">
-        
-          <a href="/tags/webshell/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>webshell</a>
-        
-          <a href="/tags/渗透测试/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>渗透测试</a>
-        
-      </div>
-    
-  </section>
-</article>
-
-          </div>
-        
-      
-    
-  </section>
-  
-    
-    <!-- 根据主题中的设置决定是否在archive中针对摘要部分的MathJax公式加载mathjax.js文件 -->
-    
-    
-
-  
+  <script>
+    window.subData = {
+      title: 'CMS代码审计(二)',
+      tools: true
+    }
+  </script>
 
 
 </div>
@@ -936,6 +495,20 @@
           
           
             
+  <section class='widget toc-wrapper'>
+    
+<header class='material'>
+  <div><i class="fas fa-list fa-fw" aria-hidden="true"></i>&nbsp;&nbsp;本文目录</div>
+  
+    <div class='wrapper'><a class="s-toc rightBtn" rel="external nofollow noopener noreferrer" href="javascript:void(0)"><i class="fas fa-thumbtack fa-fw"></i></a></div>
+  
+</header>
+
+    <div class='content material'>
+      <ol class="toc"><li class="toc-item toc-level-4"><a class="toc-link" href="#初步分析"><span class="toc-text">初步分析</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#正文"><span class="toc-text">正文</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#总结"><span class="toc-text">总结</span></a></li></ol>
+    </div>
+  </section>
+
 
           
         
@@ -1210,6 +783,17 @@ setInterval("createtime()",250);
 
 
 
+
+  <script type="text/javascript">
+    (function(d, s) {
+      var j, e = d.getElementsByTagName(s)[0];
+      if (typeof LivereTower === 'function') { return; }
+      j = d.createElement(s);
+      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+      j.async = true;
+      e.parentNode.insertBefore(j, e);
+    })(document, 'script');
+  </script>
 
 
 

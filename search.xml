@@ -4,6 +4,33 @@
   
     
     <entry>
+      <title>数据转发姿势(不定期更新...)</title>
+      <link href="/2019/09/18/data-forward/"/>
+      <url>/2019/09/18/data-forward/</url>
+      
+        <content type="html"><![CDATA[<p>记录数据转发的各类姿势手法。</p><a id="more"></a><h4 id="SSH-端口转发"><a href="#SSH-端口转发" class="headerlink" title="SSH 端口转发"></a>SSH 端口转发</h4><h5 id="动态端口转发-SOCKS代理"><a href="#动态端口转发-SOCKS代理" class="headerlink" title="动态端口转发(SOCKS代理)"></a>动态端口转发(SOCKS代理)</h5><p>让不加密的连接走<code>SSH</code>连接，提高数据安全性。</p><p><code>SSH -D port user@host</code></p><p><code>SSH</code>会建立一个<code>socket</code>连接，监听转发的端口。经过该端口的数据会被转发到远程主机。</p><h5 id="场景"><a href="#场景" class="headerlink" title="场景"></a>场景</h5><p>A B C三台主机，A在网段A，B在网段B，不能互相ping通，但是C有两张网卡可以沟通A和B，我们可以在C上使用动态端口转发，然后A挂上C的socks代理就能访问B。</p><h5 id="本地端口转发"><a href="#本地端口转发" class="headerlink" title="本地端口转发"></a>本地端口转发</h5><p><code>ssh -L local_port ssh_ip ssh_port server</code></p><h5 id="场景-1"><a href="#场景-1" class="headerlink" title="场景"></a>场景</h5><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190909104551.png" alt></p><p><code>host1</code>和<code>host2</code>不能直接访问，但是可以通过<code>host2</code>中继一下。</p><p><code>ssh -L 2121:host2:21 host3</code></p><p><code>host1</code>绑定本地2121端口，当有到2121端口连接时转发到<code>host3</code>,由<code>host3</code>连接到<code>host2</code>的21端口。此时<code>host1</code>作为一个服务端。</p><p><code>host1</code>本地执行<code>ssh -p 2121 localhost</code> 连接到本地2121端口，实际连接的是<code>host2</code>的22端口。</p><h5 id="远程端口转发-内网穿透"><a href="#远程端口转发-内网穿透" class="headerlink" title="远程端口转发(内网穿透)"></a>远程端口转发(内网穿透)</h5><p><code>ssh -R port:&lt;host2&gt;:host2_port host3</code></p><p>让远程主机<code>host3</code>监听端口<code>port</code>,本地主机与<code>host</code>建立连接。将内网<code>host2</code>端口转发到外网<code>host3</code>的<code>port</code>端口。</p><h5 id="场景-2"><a href="#场景-2" class="headerlink" title="场景"></a>场景</h5><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190909110356.png" alt></p><p>外网不能访问内网，内网之间可以访问。</p><p>在<code>host1</code>上，<code>ssh -R 2222:host2:22 host3</code>,意思就是让<code>host3</code>监听2222端口，然后把数据经过<code>host1</code>转发给<code>host2</code></p><p>在<code>host3</code>上，<code>ssh -p 2222 localhost</code> 实际连接的是<code>host2</code>。</p><p>如果<code>host1</code>和<code>host2</code>是同一台主机，就更好理解了，典型的内网穿透的场景，内网能访问外网，但是外网不能访问内网。</p><h4 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h4><ul><li><a href="https://cherrot.com/tech/2017/01/08/ssh-tunneling-practice.html" target="_blank" rel="noopener">https://cherrot.com/tech/2017/01/08/ssh-tunneling-practice.html</a></li></ul>]]></content>
+      
+      
+      <categories>
+          
+          <category> 内网渗透 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> 内网 </tag>
+            
+            <tag> 安全 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>powershell初体验</title>
       <link href="/2019/09/17/powershell/"/>
       <url>/2019/09/17/powershell/</url>
@@ -45,11 +72,11 @@
       
         <tags>
             
+            <tag> 安全 </tag>
+            
             <tag> cobalt_strike </tag>
             
             <tag> tools </tag>
-            
-            <tag> 安全 </tag>
             
         </tags>
       

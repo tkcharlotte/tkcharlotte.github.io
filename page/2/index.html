@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   
-  <title>404 Not Found | tkcharlotte&#39;s blog</title>
+  <title>tkcharlotte&#39;s blog</title>
   
   
 
@@ -43,62 +43,7 @@
 <body>
   
   
-  <div class="cover-wrapper">
-    <cover class='cover page half'>
-      
-        
-  <h1 class='title'>tkcharlotte's blog</h1>
-
-
-  <div class="m_search">
-    <form name="searchform" class="form u-search-form">
-      <input type="text" class="input u-search-input" placeholder="搜索" />
-      <i class="icon fas fa-search fa-fw"></i>
-    </form>
-  </div>
-
-<div class='menu navgation'>
-  <ul class='h-list'>
-    
-      
-        <li>
-          <a class="nav home" href="/"
-            
-            
-            id="home">
-            <i class='fas fa-rss fa-fw'></i>&nbsp;文章
-          </a>
-        </li>
-      
-        <li>
-          <a class="nav home" href="/friends/"
-            
-              rel="nofollow"
-            
-            
-            id="friends">
-            <i class='fas fa-link fa-fw'></i>&nbsp;友链
-          </a>
-        </li>
-      
-        <li>
-          <a class="nav home" href="/about/"
-            
-              rel="nofollow"
-            
-            
-            id="about">
-            <i class='fas fa-info-circle fa-fw'></i>&nbsp;关于我
-          </a>
-        </li>
-      
-    
-  </ul>
-</div>
-
-      
-    </cover>
-    <header class="l_header no_sidebar material">
+  <header class="l_header material">
   <div id="loading-bar-wrapper">
     <div id="loading-bar" class="material"></div>
   </div>
@@ -181,6 +126,8 @@
 			<ul class='switcher h-list'>
 				<li class='s-comment'><a class="flat-btn fas fa-comments fa-fw" href='javascript:void(0)'></a></li>
         
+          <li class='s-toc'><a class="flat-btn fas fa-list fa-fw" href='javascript:void(0)'></a></li>
+        
 			</ul>
 		</div>
 	</div>
@@ -231,17 +178,20 @@
 	</aside>
 <script>setLoadingBarProgress(40);</script>
 
-  </div>
 
 
-  <div class="l_body">
+  <div class="l_body nocover">
     <div class='body-wrapper'>
-      <div class='l_main no_sidebar'>
+      <div class='l_main'>
   
-
-  
-    <article id="page" class="post white-box article-type-page" itemscope itemprop="blogPost">
+  <section class="post-list">
+    
+    
       
+        
+          <div class='post-wrapper'>
+            <article class="post reveal ">
+  
 
 
   <section class='meta'>
@@ -249,64 +199,128 @@
     
     <div class="meta" id="header-meta">
       
+        
+  <h2 class="title">
+    <a href="/2019/08/18/shell-analy/">
+      一个shell引发的思考
+    </a>
+  </h2>
+
+
+      
       <div class='new-meta-box'>
         
+          
+        
+          
+            
+  <div class='new-meta-item author'>
+    <a href="https://boombao.net" rel="nofollow">
+      
+        <i class="fas fa-user" aria-hidden="true"></i>
+      
+      <p>tk</p>
+    </a>
+  </div>
+
+
+          
+        
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+    <p>2019-08-18</p>
+  </a>
+</div>
+
+          
+        
+          
+            
+  
+  <div class='new-meta-item category'>
+    <a href='/categories/安全/' rel="nofollow">
+      <i class="fas fa-folder-open" aria-hidden="true"></i>
+      <p>安全</p>
+    </a>
+  </div>
+
+
+          
+        
+          
+            
+
+          
+        
+          
+            
+
+          
+        
       </div>
+      
+        <hr>
       
     </div>
   </section>
 
 
-	  
-	  
-      <section class="article typo">
-        <div class="article-entry" itemprop="articleBody">
-
-			<h1 id="404-Not-Found"><a href="#404-Not-Found" class="headerlink" title="404 Not Found"></a><center><strong>404 Not Found</strong></center></h1><br>
-
-<center>**很抱歉，您访问的页面不存在**</center>
-<center>可能是输入地址有误或该地址已被删除</center>
-<br>
-<br>
-
-
+  <section class="article typo">
+    <div class="article-entry" itemprop="articleBody">
+      <h4 id="起因"><a href="#起因" class="headerlink" title="起因"></a>起因</h4><p>最近在做内部靶场平台题目，其中一道题为爆破一句话木马，拿到key的值。</p>
+      
+        <div class="readmore">
+          <a href="/2019/08/18/shell-analy/" class="flat-box">
+            <i class="fas fa-book-open fa-fw" aria-hidden="true"></i>
+            阅读全文
+          </a>
         </div>
-        
-        
-      </section>
-    </article>
-  
-
-  
-    <!-- 显示推荐文章和评论 -->
-
-
-
-  <article class="post white-box comments">
-    <section class="article typo">
-      <h4><i class="fas fa-comments fa-fw" aria-hidden="true"></i>&nbsp;评论</h4>
       
-      
-        <section id="comments">
-          <div id="lv-container" data-id="city" data-uid="MTAyMC80NTYyOC8yMjEzOQ==">
-            <noscript><div><i class='fas fa-exclamation-triangle'>&nbsp;无法加载Livere评论系统，请确保您的网络能够正常访问。</div></noscript>
+    </div>
+    
+      <div class="full-width auto-padding tags">
+        
+          <a href="/tags/webshell/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>webshell</a>
+        
+          <a href="/tags/渗透测试/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>渗透测试</a>
+        
+      </div>
+    
+  </section>
+</article>
+
           </div>
-        </section>
+        
       
-      
-      
-    </section>
-  </article>
+    
+  </section>
+  
+    
+      <br>
+      <div class="prev-next">
+        <div class="prev-next">
+          
+            <a class="prev" rel="prev" href="/">
+              <section class="post prev" >
+                <i class="fas fa-chevron-left" aria-hidden="true"></i>&nbsp;上一页&nbsp;
+              </section>
+            </a>
+          
+          <p class="current">
+            2 / 2
+          </p>
+          
+        </div>
+      </div>
 
+    
+    <!-- 根据主题中的设置决定是否在archive中针对摘要部分的MathJax公式加载mathjax.js文件 -->
+    
+    
 
   
-
-
-
-
-<!-- 根据页面mathjax变量决定是否加载MathJax数学公式js -->
-
-
 
 
 </div>
@@ -609,17 +623,6 @@ setInterval("createtime()",250);
 
 
 
-
-  <script type="text/javascript">
-    (function(d, s) {
-      var j, e = d.getElementsByTagName(s)[0];
-      if (typeof LivereTower === 'function') { return; }
-      j = d.createElement(s);
-      j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
-      j.async = true;
-      e.parentNode.insertBefore(j, e);
-    })(document, 'script');
-  </script>
 
 
 

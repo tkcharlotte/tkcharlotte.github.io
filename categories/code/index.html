@@ -249,9 +249,154 @@
         
           
         
+          
+        
       
     
     
+      
+        
+          <div class='post-wrapper'>
+            <article class="post reveal ">
+  
+
+
+  <section class='meta'>
+    
+    
+    <div class="meta" id="header-meta">
+      
+        
+  <h2 class="title">
+    <a href="/2019/09/09/audit-2/">
+      CMS代码审计(二)
+    </a>
+  </h2>
+
+
+      
+      <div class='new-meta-box'>
+        
+          
+        
+          
+            
+  <div class='new-meta-item author'>
+    <a href="https://boombao.net" rel="nofollow">
+      
+        <i class="fas fa-user" aria-hidden="true"></i>
+      
+      <p>tk</p>
+    </a>
+  </div>
+
+
+          
+        
+          
+            <div class="new-meta-item date">
+  <a class='notlink'>
+    <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+    <p>2019-09-09</p>
+  </a>
+</div>
+
+          
+        
+          
+            
+  
+  <div class='new-meta-item category'>
+    <a href='/categories/code/' rel="nofollow">
+      <i class="fas fa-folder-open" aria-hidden="true"></i>
+      <p>code</p>
+    </a>
+  </div>
+
+
+          
+        
+          
+            
+
+          
+        
+          
+            
+
+          
+        
+      </div>
+      
+        <hr>
+      
+    </div>
+  </section>
+
+
+  <section class="article typo">
+    <div class="article-entry" itemprop="articleBody">
+      <h4 id="0x01-前言"><a href="#0x01-前言" class="headerlink" title="0x01 前言"></a>0x01 前言</h4><p>本文首发于<code>90sec</code></p>
+<h4 id="0x02-分析"><a href="#0x02-分析" class="headerlink" title="0x02 分析"></a>0x02 分析</h4><p>想找点小型的<code>cms</code>审计一下练练手，谷歌一搜，跳出来一个<code>xiaocms</code>，就决定是你了~，大佬都分析过了，自己再完整的分析一遍。</p>
+<p>这套<code>cms</code>最新版发布时间是14年，应该是停止更新了。</p>
+<p><code>MVC</code>架构，看官网介绍还是用了<code>PDO</code>预编译…  注入基本是没戏了</p>
+<p>从系统入口开始，<code>include xiaocms.php</code>,<code>xiaocms.php</code>定义了一些全局变量，路由解析规则，控制器加载规则等东西。没有<code>a</code>和<code>c</code>参数时默认访问<code>index</code>方法。对控制器访问做了一定的限制，过滤了斜杠/。</p>
+<p>作者重写了<code>get</code>和<code>post</code>方法，对传入的参数使用<code>htmlspecialchars</code>过滤了<code>&lt;&gt;&quot;</code>等。</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190909180928.png" alt></p>
+<p>获取<code>ip</code>的函数也做了限制，哇难受的一批</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190909181023.png" alt></p>
+<p>太菜了，转战后台。</p>
+<h4 id="0x03-正文"><a href="#0x03-正文" class="headerlink" title="0x03 正文"></a>0x03 正文</h4><p>假设进入了后台，就要考虑怎么<code>getshell</code>，最平常的思路就是文件上传。看一下这套<code>cms</code>的上传逻辑。</p>
+<p><code>upload.class.php</code>中</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190909181219.png" alt></p>
+<p>跟进函数</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190909181327.png" alt></p>
+<p>看一下<code>$limit_type</code>是个啥，跟进去发现是个变量… 不应该哇，再一看，通过<code>set_limit_type</code>函数设置白名单，这…</p>
+<p>全局搜索一下<code>upload</code>函数，看看调用情况。找来找去都在<code>admin/uploadfile.php</code>中。</p>
+<p>通读该文件，各种上传方式实现，编辑器上传，直接上传等。</p>
+<p>在编辑器上传和<code>uploadify_upload</code>两处调用了<code>upload</code>函数,只有后者才能控制<code>type</code>。</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190909182021.png" alt></p>
+<p>后边的判断是加水印的，无关痛痒。</p>
+<p>本地构造一个表单手动上传。</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190909183644.png" alt></p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190909183707.png" alt></p>
+<p>后台也有模板管理的功能，一开始看后缀都是<code>html</code>就没多想，后来看其他师傅的分析才明白过来..模板也是要被包含进<code>php</code>文件的, 太菜了(⸝⸝⸝ᵒ̴̶̥́ ⌑ ᵒ̴̶̣̥̀⸝⸝⸝)</p>
+<p>所以可以后台编辑模板，写入<code>phpinfo</code>,就能执行。分析一下原因</p>
+<p>后台编辑模板<code>url</code>为<code>http://127.0.0.1/xiaocms/admin/index.php?c=template&amp;a=edit&amp;dir=&amp;file=index.html</code></p>
+<p><code>template.php</code>中的<code>editAction</code>方法</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190909184827.png" alt></p>
+<p>判断<code>file</code>的后缀是否合法，然后使用<code>file_put_contents</code>把<code>file_content</code>的值写入文件，注意一下，本来<code>post</code>方法使用了<code>htmlspecialchars</code>函数进行过滤，此处又进行了解码,所以写入的还是原来传入的内容。</p>
+<p>此时<code>php</code>代码只是在<code>html</code>文件中，它是怎么被加载的呢？</p>
+<p>继续往下走，假设我们修改了<code>index.html</code>模板文件，访问<code>index.php</code>时会触发<code>php</code>代码，跟进<code>indexAction</code>函数，不传入任何参数默认执行<code>index</code>方法。</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190910090039.png" alt></p>
+<p>问题应该是出在<code>display</code>函数，跟进去看一下</p>
+<p><code>view.class.php</code> 34行</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190910090212.png" alt></p>
+<p>首先获取<code>html</code>文件的内容，然后获取缓存文件，如果<code>html</code>对应的缓存文件与源<code>html</code>都存在，就调用<code>load_view_file</code>函数。</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190916103519.png" alt></p>
+<p>该函数调用<code>handle_view_file</code>对<code>cms</code>规定的一些标签进行替换,但是没有足够的过滤。</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190916103739.png" alt></p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190916103754.png" alt></p>
+<p>最后通过<code>create_compile_file</code>函数写入缓存文件，最后包含该缓存文件，导致任意<code>php</code>代码被执行。</p>
+<p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190910091252.png" alt></p>
+<h4 id="0x04-插曲"><a href="#0x04-插曲" class="headerlink" title="0x04 插曲"></a>0x04 插曲</h4><p>因为这套<code>cms</code>早就停止更新了，官网推荐使用另一个<code>cms</code>，顺便瞅了瞅，应该是在<code>xiaocms</code>的基础上开发的，安全做的可以，传入的参数使用<code>PDO</code>预编译，对上传文件的<code>type</code>和后缀都做了严格的白名单限制，前台功能点太少，无望，但是后台某些地方还是有相同问题的，比如说模板文件<code>getshell</code>,触发点还是相同的，还是上边分析的文件包含，感兴趣的师傅可以分析一下。</p>
+<h4 id="0x05-总结"><a href="#0x05-总结" class="headerlink" title="0x05 总结"></a>0x05 总结</h4><p>审计时要白+黑，白盒+黑盒测试一起，关注一下底层的一些过滤函数以及<code>sql</code>处理 上传逻辑等，根据功能点进行代码分析，最重要的是有耐心吧=。= 这次看的还是不够仔细啊，后台还可以尝试配置文件写shell，但是会多一个单引号，导致代码不解析，因为存在<code>var_export</code>的原因，这一点在审计<code>minicms</code>时也遇见过。</p>
+<p><code>up up!!!(ง •̀-•́)ง</code></p>
+
+      
+    </div>
+    
+      <div class="full-width auto-padding tags">
+        
+          <a href="/tags/代码审计/" rel="nofollow"><i class="fas fa-hashtag fa-fw"></i>代码审计</a>
+        
+      </div>
+    
+  </section>
+</article>
+
+          </div>
+        
       
         
           <div class='post-wrapper'>
@@ -493,7 +638,7 @@
     <div class='content material'>
       <ul class="entry">
         
-          <li><a class="flat-box" title="/categories/code/" href="/categories/code/"><div class='name'>code</div><div class='badge'>(1)</div></a></li>
+          <li><a class="flat-box" title="/categories/code/" href="/categories/code/"><div class='name'>code</div><div class='badge'>(2)</div></a></li>
         
           <li><a class="flat-box" title="/categories/内网渗透/" href="/categories/内网渗透/"><div class='name'>内网渗透</div><div class='badge'>(1)</div></a></li>
         
@@ -532,7 +677,7 @@
 </header>
 
     <div class='content material'>
-      <a href="/tags/cobalt-strike/" style="font-size: 14px; color: #999">cobalt_strike</a> <a href="/tags/powershell/" style="font-size: 14px; color: #999">powershell</a> <a href="/tags/sql注入/" style="font-size: 24px; color: #555">sql注入</a> <a href="/tags/tools/" style="font-size: 14px; color: #999">tools</a> <a href="/tags/webshell/" style="font-size: 14px; color: #999">webshell</a> <a href="/tags/web安全/" style="font-size: 14px; color: #999">web安全</a> <a href="/tags/代码审计/" style="font-size: 14px; color: #999">代码审计</a> <a href="/tags/内网/" style="font-size: 14px; color: #999">内网</a> <a href="/tags/安全/" style="font-size: 24px; color: #555">安全</a> <a href="/tags/渗透测试/" style="font-size: 14px; color: #999">渗透测试</a>
+      <a href="/tags/cobalt-strike/" style="font-size: 14px; color: #999">cobalt_strike</a> <a href="/tags/powershell/" style="font-size: 14px; color: #999">powershell</a> <a href="/tags/sql注入/" style="font-size: 24px; color: #555">sql注入</a> <a href="/tags/tools/" style="font-size: 14px; color: #999">tools</a> <a href="/tags/webshell/" style="font-size: 14px; color: #999">webshell</a> <a href="/tags/web安全/" style="font-size: 14px; color: #999">web安全</a> <a href="/tags/代码审计/" style="font-size: 24px; color: #555">代码审计</a> <a href="/tags/内网/" style="font-size: 14px; color: #999">内网</a> <a href="/tags/安全/" style="font-size: 24px; color: #555">安全</a> <a href="/tags/渗透测试/" style="font-size: 14px; color: #999">渗透测试</a>
     </div>
   </section>
 
@@ -578,7 +723,7 @@
     } 
 setInterval("createtime()",250);
 </script>
-<span class="post-count"> | 字数统计：7.9k</span>
+<span class="post-count"> | 字数统计：8.9k</span>
 </footer>
 <script>setLoadingBarProgress(80);</script>
 

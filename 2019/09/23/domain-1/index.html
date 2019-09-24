@@ -403,7 +403,7 @@
 </ul>
 <p>最后是<code>Client</code>与<code>Server</code>的交互：</p>
 <ul>
-<li><code>Client</code>获得<code>TGS</code>发回的数据后用<code>Server-Session-Key</code>解密得到<code>Server-Session-Key</code>,将网络地址 ID等信息通过<code>Server-Session-Key</code>加密，连带<code>Server-Ticket</code>一起发送给<code>Server</code>.(KRB_AP_REQ)</li>
+<li><code>Client</code>获得<code>TGS</code>发回的数据后用<code>TGS-Session-Key</code>解密得到<code>Server-Session-Key</code>,将网络地址 ID等信息通过<code>Server-Session-Key</code>加密，连带<code>Server-Ticket</code>一起发送给<code>Server</code>.(KRB_AP_REQ)</li>
 <li><code>Server</code>接收到消息后会用自身<code>Hash</code>解密<code>Server-Ticket</code>，然后验证，验证通过后开始传输数据，走正常的服务请求。(KRB_AP_REP)</li>
 </ul>
 <h6 id="Golden-Ticket-黄金票据"><a href="#Golden-Ticket-黄金票据" class="headerlink" title="Golden Ticket(黄金票据)"></a>Golden Ticket(黄金票据)</h6><p><code>TGT</code>是由<code>KRBTGT</code>用户生成的，有了该票据你可以访问任何通过<code>kerberos</code>认证的服务，如果我们拿到了该用户的<code>Hash</code>，那么我们就可以伪造<code>TGT</code>,该用户只存在于域控中，所以前提是你要拿到域控的权限，有了域控权限干啥不行…  </p>
@@ -662,10 +662,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2019-09-23T11:13:16+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2019-09-24T13:38:27+08:00">
   <a class='notlink'>
     <i class="fas fa-clock" aria-hidden="true"></i>
-    <p>最后更新于 2019年9月23日</p>
+    <p>最后更新于 2019年9月24日</p>
   </a>
 </div>
 

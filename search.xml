@@ -4,6 +4,31 @@
   
     
     <entry>
+      <title>thinkcmfx 代码执行分析</title>
+      <link href="/2019/10/31/thinkcmfx/"/>
+      <url>/2019/10/31/thinkcmfx/</url>
+      
+        <content type="html"><![CDATA[<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>看了师傅们的分析，对tp不是很熟，所以对一些地方还是有疑问，自己分析一下。:)</p><a id="more"></a><p>thinkcmfx是基于thinkphp3开发的框架，目前已停止更新，目前还在维护的是thinkcmf，基于tp5开发。本文分析的版本为github上的<a href="https://github.com/thinkcmf/cmfx/releases" target="_blank" rel="noopener">2.2.2版本</a>。</p><h3 id="payload"><a href="#payload" class="headerlink" title="payload"></a>payload</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?a=fetch&amp;templateFile=public/index&amp;prefix=&apos;&apos;&amp;content=&lt;php&gt;file_put_contents(&apos;test.php&apos;,&apos;&lt;?php phpinfo(); ?&gt;&apos;)&lt;/php&gt;</span><br></pre></td></tr></table></figure><h3 id="代码分析"><a href="#代码分析" class="headerlink" title="代码分析"></a>代码分析</h3><p><code>application\Common\Conf\config.php</code></p><p>看一下配置文件，默认的模块就是Portal，分别用g/m/a获取模块/控制器/方法.</p><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20191031091006.png" alt></p><p>直接看controller目录下的IndexController.class.php文件。该文件继承父类HomebaseController，跟进看一下这个文件，定位到fetch函数</p><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20191030164325.png" alt></p><p>单步跟踪会发现往下调用的还是thinkphp的fetch方法</p><p><code>simplewind\Core\Library\Think\View.class.php</code></p><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20191030164300.png" alt></p><p>传入的三个参数对应该函数的三个变量，其中模板templatefile要存在，不然会直接返回，接下来会获取程序的模板解析引擎，thinphp默认的解析引擎是Think而不是php，</p><p><code>simplewind\Core\Conf\convention.php</code></p><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20191030164815.png" alt></p><p>模板引擎不是php时就会解析视图标签，通过Hook类的listen方法调用view_parse对应的行为，在``simplewind\Core\Mode\common.php`中规定了该行为对应的处理类</p><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20191030165933.png" alt></p><p>跟进看一下这个类</p><p><code>simplewind/Core/Library/Behavior/ParseTemplateBehavior.class.php</code></p><p>直接看入口run方法</p><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20191030170041.png" alt></p><p>采用Think模板引擎时会首先检查是否已经有缓存文件，没有的话就通过fetch方法重新解析标签，有的话通过load方法加载文件</p><p>看一下load方法</p><p><code>simplewind/Core/Library/Think/Storage/Driver/File.class.php</code></p><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20191030170313.png" alt></p><p>直接包含缓存文件，导致代码被执行，把文件写入到web目录下。</p><p>生成的缓存文件位置在runtime/Cache目录下</p><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20191031094015.png" alt></p>]]></content>
+      
+      
+      <categories>
+          
+          <category> 安全 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> 代码审计 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>域渗透常用姿势总结</title>
       <link href="/2019/09/23/domain-1/"/>
       <url>/2019/09/23/domain-1/</url>
@@ -45,9 +70,9 @@
       
         <tags>
             
-            <tag> 内网 </tag>
-            
             <tag> 安全 </tag>
+            
+            <tag> 内网 </tag>
             
         </tags>
       
@@ -122,11 +147,11 @@
       
         <tags>
             
-            <tag> 安全 </tag>
-            
             <tag> cobalt_strike </tag>
             
             <tag> tools </tag>
+            
+            <tag> 安全 </tag>
             
         </tags>
       

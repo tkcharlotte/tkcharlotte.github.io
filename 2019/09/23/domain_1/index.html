@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   
-  <title>域渗透常用姿势总结 | tkcharlotte&#39;s blog</title>
+  <title>我了解的域渗透(不定时更新...) | tkcharlotte&#39;s blog</title>
   
   
 
@@ -210,8 +210,8 @@
         
   
     <h1 class="title">
-      <a href="/2019/09/23/domain-1/">
-        域渗透常用姿势总结
+      <a href="/2019/09/23/domain_1/">
+        我了解的域渗透(不定时更新...)
       </a>
     </h1>
   
@@ -340,6 +340,27 @@
 <p>在一定条件下<code>pth</code>也可以用于远程桌面登录，细节看三好学生师傅<a href="[https://3gstudent.github.io/3gstudent.github.io/%E6%B8%97%E9%80%8F%E6%8A%80%E5%B7%A7-Pass-the-Hash-with-Remote-Desktop/](https://3gstudent.github.io/3gstudent.github.io/渗透技巧-Pass-the-Hash-with-Remote-Desktop/)">文章</a></p>
 <h6 id="ptk"><a href="#ptk" class="headerlink" title="ptk"></a>ptk</h6><p>上文中提到可以使用<code>pth(pass the hash)</code>来完成对内网的渗透拓展，控制其他主机，微软在12年发布了针对<code>pth</code>的补丁<code>KBb2871997</code>,打了补丁以后常规的攻击无法复现，但是忽略了默认的<code>Administrator(SID 500)</code>,只要用户的<code>SID</code>为500，就可以用该账户进行攻击。</p>
 <p>在内网禁用了<code>NTLM</code>的环境下也无法进行传递攻击。而<code>mimikatz</code>中的<code>sekurlsa::pth</code>模块可以突破这一点，使用<code>aes key</code> 完成攻击，所以被称为<code>pass-the-key</code>.</p>
+<h6 id="NTLM-中继攻击"><a href="#NTLM-中继攻击" class="headerlink" title="NTLM 中继攻击"></a>NTLM 中继攻击</h6><p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20191114163655.png" alt></p>
+<p>上图中从左到右三台机器分别为A/C/B.</p>
+<p>正常情况下A与B之间进行<code>NTLM</code>认证，A与B并不能判断对方是否是真正的A或者B，在这种情况下如果有一个攻击者C，拦截A的流量，然后转发给B，接到B的认证响应后再转发给A，起一个中间人的角色。而如果把A和B合为一台机器，也就是所说的反射攻击。</p>
+<p>按照<a href="https://mp.weixin.qq.com/s/aemG5XwVdyzNbOBXztDUbA" target="_blank" rel="noopener">n1nty大佬的文章</a>所讲，<code>NTLM</code>协议是一种嵌入式的协议，认证的过程怎么传输完全取决于上层的协议，平时看到比较多的就是<code>SMB-relay</code>,除了<code>smb</code>,还可以利用<code>http</code>/<code>ldap</code>/<code>...</code>多种协议。</p>
+<p>比较典型的有以下几种使用场景：</p>
+<p><code>smb-relay</code>攻击</p>
+<p>目标不能开启<code>smb</code>签名，默认情况下<code>windows server</code>都开放，非<code>server</code>版本默认关闭。详细过程看以下文章：</p>
+<p><a href="[https://uknowsec.cn/posts/notes/%E5%9F%9F%E6%B8%97%E9%80%8F-Relay.html](https://uknowsec.cn/posts/notes/域渗透-Relay.html)">域渗透-Relay</a></p>
+<p>利用<code>http-&gt;ldap</code> 攻击 <code>exchange</code></p>
+<ul>
+<li><p>CVE-2018-8581(<code>privExchange</code>)</p>
+<p>反射调用<code>Exchange</code>的<code>ews</code>接口。</p>
+<p>详细过程看<a href="https://www.cnblogs.com/iamstudy/articles/Microsoft_Exchange_CVE-2018-8581.html" target="_blank" rel="noopener">l3m0n大佬博客</a></p>
+</li>
+<li><p>CVE-2019-1040利用</p>
+<p>已经公开的攻击方式有两种，分别是攻击<code>exchange</code>和<code>AD Server</code>，通过触发<code>printerbug</code>来触发反射，触发的唯一条件就是要有经过认证的域账户。</p>
+<p>详细原理看下方:</p>
+<p><a href="https://www.anquanke.com/post/id/180379" target="_blank" rel="noopener">内网大杀器利用：CVE-2019-1040漏洞</a></p>
+<p><a href="https://paper.seebug.org/962/" target="_blank" rel="noopener"> 结合 CVE-2019-1040 漏洞的两种域提权利用深度分析 </a></p>
+</li>
+</ul>
 <h5 id="Kerberos认证"><a href="#Kerberos认证" class="headerlink" title="Kerberos认证"></a>Kerberos认证</h5><p><code>Kerberos</code>认证涉及到三方，分别是<code>Client</code> <code>KDC</code> <code>Server</code>，而<code>KDC</code>又分为两部分，分别是<code>AS(Authentication Server)</code>以及<code>TGS(Ticket Granting Server)</code>,在该认证过程中靠的是票据，类似于<code>Token</code>一样的一种表明身份的东西。</p>
 <p><img src="https://boombao.oss-cn-beijing.aliyuncs.com/20190919085624.png" alt></p>
 <p><code>kerberos</code>认证可以类比坐火车，首先你要通过火车站的安检系统，这样才能进入火车站，进站以后拿到上车的凭证-车票，上车时再核对车票信息，一切都通过后就可以享受火车之旅，同样的，在<code>kerberos</code>认证中<code>Client</code>先与<code>AS</code>交互，得到一个凭证来访问<code>TGS</code>，再与<code>TGS</code>交互，得到访问服务的凭证，最后与服务器交互，完成信息交互。</p>
@@ -594,7 +615,7 @@
 <p><a href="https://medium.com/@petergombos/lm-ntlm-net-ntlmv2-oh-my-a9b235c58ed4" target="_blank" rel="noopener">LM, NTLM, Net-NTLMv2, oh my!</a></p>
 <p><a href="https://github.com/crazywa1ker/DarthSidious-Chinese" target="_blank" rel="noopener">https://github.com/crazywa1ker/DarthSidious-Chinese</a></p>
 <p><a href="https://sakuxa.com/2019/04/03/01-Windows认证之NTLM/" target="_blank" rel="noopener">https://sakuxa.com/2019/04/03/01-Windows认证之NTLM/</a></p>
-<p><a href="[http://www.h0r2yc.cn/2019/08/17/windows%E8%AE%A4%E8%AF%81-%E7%99%BD%E9%93%B6%E7%A5%A8%E6%8D%AE%E3%80%81%E9%BB%84%E9%87%91%E7%A5%A8%E6%8D%AE%E5%88%86%E6%9E%90%E5%8F%8A%E5%88%A9%E7%94%A8/](http://www.h0r2yc.cn/2019/08/17/windows认证-白银票据、黄金票据分析及利用/)">windows认证-白银票据、黄金票据分析及利用</a></p>
+<p><a href="http://www.h0r2yc.cn/2019/08/17/windows认证-白银票据、黄金票据分析及利用/" target="_blank" rel="noopener">windows认证-白银票据、黄金票据分析及利用</a></p>
 <p><a href="https://3gstudent.github.io/域渗透-Kerberoasting/" target="_blank" rel="noopener">域渗透——Kerberoasting</a></p>
 <p><a href="https://www.anquanke.com/post/id/92646" target="_blank" rel="noopener">我所了解的内网渗透——内网渗透知识大总结</a></p>
 <p><a href="https://www.freebuf.com/articles/system/6089.html" target="_blank" rel="noopener">https://www.freebuf.com/articles/system/6089.html</a></p>
@@ -605,8 +626,11 @@
 <p><a href="https://xz.aliyun.com/t/2931" target="_blank" rel="noopener">Attacking Kerberos Delegation</a></p>
 <p><a href="https://www.anquanke.com/post/id/151241#h2-12" target="_blank" rel="noopener">域密码哈希导出的那些事儿</a></p>
 <p><a href="https://www.cnblogs.com/backlion/p" target="_blank" rel="noopener">渗透测试中心</a></p>
-<p><a href="[https://3gstudent.github.io/3gstudent.github.io/%E5%9F%9F%E6%B8%97%E9%80%8F-%E8%8E%B7%E5%BE%97%E5%9F%9F%E6%8E%A7%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%9A%84NTDS.dit%E6%96%87%E4%BB%B6/](https://3gstudent.github.io/3gstudent.github.io/域渗透-获得域控服务器的NTDS.dit文件/)">域渗透-获得域控服务器的NTDS.dit文件</a></p>
-<p><a href="[https://wooyun.js.org/drops/%E5%AF%BC%E5%87%BA%E5%BD%93%E5%89%8D%E5%9F%9F%E5%86%85%E6%89%80%E6%9C%89%E7%94%A8%E6%88%B7hash%E7%9A%84%E6%8A%80%E6%9C%AF%E6%95%B4%E7%90%86.html](https://wooyun.js.org/drops/导出当前域内所有用户hash的技术整理.html)">导出当前域内所有用户hash的技术整理</a></p>
+<p><a href="https://3gstudent.github.io/3gstudent.github.io/域渗透-获得域控服务器的NTDS.dit文件/" target="_blank" rel="noopener">域渗透-获得域控服务器的NTDS.dit文件</a></p>
+<p><a href="https://wooyun.js.org/drops/导出当前域内所有用户hash的技术整理.html" target="_blank" rel="noopener">导出当前域内所有用户hash的技术整理</a></p>
+<p><a href="https://mp.weixin.qq.com/s/aemG5XwVdyzNbOBXztDUbA" target="_blank" rel="noopener">360 A-TEAM 带你走进 NTLM-Relay</a></p>
+<p><a href="https://www.anquanke.com/post/id/180379" target="_blank" rel="noopener">内网大杀器利用：CVE-2019-1040漏洞</a></p>
+<p><a href="https://paper.seebug.org/962/" target="_blank" rel="noopener"> 结合 CVE-2019-1040 漏洞的两种域提权利用深度分析 </a></p>
 
         </div>
         
@@ -618,10 +642,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2019-09-26T14:41:13+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2019-11-15T13:46:59+08:00">
   <a class='notlink'>
     <i class="fas fa-clock" aria-hidden="true"></i>
-    <p>最后更新于 2019年9月26日</p>
+    <p>最后更新于 2019年11月15日</p>
   </a>
 </div>
 
@@ -726,7 +750,7 @@
 
   <script>
     window.subData = {
-      title: '域渗透常用姿势总结',
+      title: '我了解的域渗透(不定时更新...)',
       tools: true
     }
   </script>
@@ -756,7 +780,7 @@
 </header>
 
     <div class='content material'>
-      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#域渗透-—-预备知识"><span class="toc-text">域渗透 — 预备知识</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#何为域"><span class="toc-text">何为域</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#windows-认证方式"><span class="toc-text">windows 认证方式</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#NTLM认证"><span class="toc-text">NTLM认证</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#Hash类型"><span class="toc-text">Hash类型</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#工作组环境中的认证"><span class="toc-text">工作组环境中的认证</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#域环境中的认证"><span class="toc-text">域环境中的认证</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#pth"><span class="toc-text">pth</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#ptk"><span class="toc-text">ptk</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Kerberos认证"><span class="toc-text">Kerberos认证</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#Golden-Ticket-黄金票据"><span class="toc-text">Golden Ticket(黄金票据)</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#Silver-Ticket-白银票据"><span class="toc-text">Silver Ticket(白银票据)</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#MS14-068"><span class="toc-text">MS14-068</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#委派攻击"><span class="toc-text">委派攻击</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#Kerberoasting"><span class="toc-text">Kerberoasting</span></a></li></ol></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#组策略首选项-SYSVOL-GPP漏洞-–2k08"><span class="toc-text">组策略首选项 + SYSVOL (GPP漏洞 –2k08)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#域信任关系"><span class="toc-text">域信任关系</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#域信息收集常用命令"><span class="toc-text">域信息收集常用命令</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#待补充…"><span class="toc-text">待补充…</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#域渗透-—-实践过程"><span class="toc-text">域渗透 — 实践过程</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#pth-1"><span class="toc-text">pth</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#mimikatz"><span class="toc-text">mimikatz</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#powershell"><span class="toc-text">powershell</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ptt"><span class="toc-text">ptt</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#MS14-068-1"><span class="toc-text">MS14-068</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#黄金票据"><span class="toc-text">黄金票据</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#白银票据"><span class="toc-text">白银票据</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ptk-1"><span class="toc-text">ptk</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#kerberoast"><span class="toc-text">kerberoast</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#委派攻击-1"><span class="toc-text">委派攻击</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#无约束委派"><span class="toc-text">无约束委派</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#约束委派"><span class="toc-text">约束委派</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#基于资源的约束委派"><span class="toc-text">基于资源的约束委派</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#哈希导出"><span class="toc-text">哈希导出</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#DCsync"><span class="toc-text">DCsync</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#mimikatz-1"><span class="toc-text">mimikatz</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#powershell-1"><span class="toc-text">powershell</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#Empire"><span class="toc-text">Empire</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#NTDS-DIT-Volume-Shadow-Copy-Service"><span class="toc-text">NTDS.DIT/Volume Shadow Copy Service</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#ntdsutil"><span class="toc-text">ntdsutil</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#vssadmin"><span class="toc-text">vssadmin</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#vshadow"><span class="toc-text">vshadow</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#…"><span class="toc-text">….</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#从NTDS-DIT中提取哈希"><span class="toc-text">从NTDS.DIT中提取哈希</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#注册表导出哈希"><span class="toc-text">注册表导出哈希</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#其他"><span class="toc-text">其他</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#参考资料"><span class="toc-text">参考资料</span></a></li></ol>
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#域渗透-—-预备知识"><span class="toc-text">域渗透 — 预备知识</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#何为域"><span class="toc-text">何为域</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#windows-认证方式"><span class="toc-text">windows 认证方式</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#NTLM认证"><span class="toc-text">NTLM认证</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#Hash类型"><span class="toc-text">Hash类型</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#工作组环境中的认证"><span class="toc-text">工作组环境中的认证</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#域环境中的认证"><span class="toc-text">域环境中的认证</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#pth"><span class="toc-text">pth</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#ptk"><span class="toc-text">ptk</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#NTLM-中继攻击"><span class="toc-text">NTLM 中继攻击</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Kerberos认证"><span class="toc-text">Kerberos认证</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#Golden-Ticket-黄金票据"><span class="toc-text">Golden Ticket(黄金票据)</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#Silver-Ticket-白银票据"><span class="toc-text">Silver Ticket(白银票据)</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#MS14-068"><span class="toc-text">MS14-068</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#委派攻击"><span class="toc-text">委派攻击</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#Kerberoasting"><span class="toc-text">Kerberoasting</span></a></li></ol></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#组策略首选项-SYSVOL-GPP漏洞-–2k08"><span class="toc-text">组策略首选项 + SYSVOL (GPP漏洞 –2k08)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#域信任关系"><span class="toc-text">域信任关系</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#域信息收集常用命令"><span class="toc-text">域信息收集常用命令</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#待补充…"><span class="toc-text">待补充…</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#域渗透-—-实践过程"><span class="toc-text">域渗透 — 实践过程</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#pth-1"><span class="toc-text">pth</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#mimikatz"><span class="toc-text">mimikatz</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#powershell"><span class="toc-text">powershell</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ptt"><span class="toc-text">ptt</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#MS14-068-1"><span class="toc-text">MS14-068</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#黄金票据"><span class="toc-text">黄金票据</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#白银票据"><span class="toc-text">白银票据</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ptk-1"><span class="toc-text">ptk</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#kerberoast"><span class="toc-text">kerberoast</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#委派攻击-1"><span class="toc-text">委派攻击</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#无约束委派"><span class="toc-text">无约束委派</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#约束委派"><span class="toc-text">约束委派</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#基于资源的约束委派"><span class="toc-text">基于资源的约束委派</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#哈希导出"><span class="toc-text">哈希导出</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#DCsync"><span class="toc-text">DCsync</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#mimikatz-1"><span class="toc-text">mimikatz</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#powershell-1"><span class="toc-text">powershell</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#Empire"><span class="toc-text">Empire</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#NTDS-DIT-Volume-Shadow-Copy-Service"><span class="toc-text">NTDS.DIT/Volume Shadow Copy Service</span></a><ol class="toc-child"><li class="toc-item toc-level-6"><a class="toc-link" href="#ntdsutil"><span class="toc-text">ntdsutil</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#vssadmin"><span class="toc-text">vssadmin</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#vshadow"><span class="toc-text">vshadow</span></a></li><li class="toc-item toc-level-6"><a class="toc-link" href="#…"><span class="toc-text">….</span></a></li></ol></li><li class="toc-item toc-level-5"><a class="toc-link" href="#从NTDS-DIT中提取哈希"><span class="toc-text">从NTDS.DIT中提取哈希</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#注册表导出哈希"><span class="toc-text">注册表导出哈希</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#其他"><span class="toc-text">其他</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#参考资料"><span class="toc-text">参考资料</span></a></li></ol>
     </div>
   </section>
 
@@ -805,7 +829,7 @@
     } 
 setInterval("createtime()",250);
 </script>
-<span class="post-count"> | 字数统计：16.4k</span>
+<span class="post-count"> | 字数统计：16.8k</span>
 </footer>
 <script>setLoadingBarProgress(80);</script>
 

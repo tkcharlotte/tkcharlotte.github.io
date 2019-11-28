@@ -357,7 +357,8 @@
 <p>使用<code>-s</code>参数 获得一个<code>system</code>权限的<code>shell</code></p>
 <h4 id="cmd乱码"><a href="#cmd乱码" class="headerlink" title="cmd乱码"></a>cmd乱码</h4><p>使用<code>chcp</code>命令切换编码</p>
 <p><code>chcp 65001</code> //<code>utf-8</code>编码</p>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>因为跳板机与域内主机安装了防护软件，常见的白名单执行方式都没法使用，对免杀提出了很高的要求。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p><code>weblogic</code>以管理员权限启动，</p>
+<p>因为跳板机与域内主机安装了防护软件，常见的白名单执行方式都没法使用，对免杀提出了很高的要求(后来测试发现可以使用<code>msbuild.exe</code> 白+黑的方式执行<code>exp</code>，反弹<code>shell</code>，弹到<code>msf</code>或者<code>cs</code>上更利于下一步的渗透。)</p>
 <p>拿到权限后，可以把<code>shell</code>反弹到<code>cs</code>上，后续渗透操作会方便很多，也利于团队协作。</p>
 <p><code>weblogic</code>除了反序列化的洞以外，也存在弱口令<code>1qaz@WSX</code>,部署war包拿权限也应该可行。</p>
 <p>因为直接拿到了账户密码，如果只能获得哈希，可以使用<code>msf</code>的<code>psexec</code>模块传递哈希值，有了域内用户的账号密码，也可以尝试<code>MS14-068</code>走<code>kerberos</code>协议，因为要在被控机上注入票据，被控机有防护，暂时无法突破…</p>
@@ -372,10 +373,10 @@
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2019-11-15T13:46:27+08:00">
+          <div class="new-meta-item date" itemprop="dateUpdated" datetime="2019-11-23T14:32:00+08:00">
   <a class='notlink'>
     <i class="fas fa-clock" aria-hidden="true"></i>
-    <p>最后更新于 2019年11月15日</p>
+    <p>最后更新于 2019年11月23日</p>
   </a>
 </div>
 
@@ -540,7 +541,7 @@
     } 
 setInterval("createtime()",250);
 </script>
-<span class="post-count"> | 字数统计：16.8k</span>
+<span class="post-count"> | 字数统计：16.9k</span>
 </footer>
 <script>setLoadingBarProgress(80);</script>
 
